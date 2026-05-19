@@ -1,0 +1,5221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rockstar Capital - Asset Management Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 24px 32px;
+    border-bottom: 2px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+  .header .subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #2563eb; }
+  .btn-secondary { background: #334155; }
+  .btn-secondary:hover { background: #475569; }
+  .btn-danger { background: #dc2626; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-success { background: #16a34a; }
+  .btn-success:hover { background: #15803d; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  .tabs {
+    display: flex;
+    background: #1e293b;
+    padding: 0 32px;
+    border-bottom: 1px solid #334155;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #94a3b8;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #60a5fa; border-bottom-color: #3b82f6; }
+
+  .container { padding: 24px 32px; max-width: 1600px; margin: 0 auto; }
+
+  /* Portfolio Overview */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+  }
+  .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 6px; }
+  .stat-sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .stat-sub.positive { color: #4ade80; }
+  .stat-sub.negative { color: #f87171; }
+
+  .properties-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .property-card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .property-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
+  .property-name { font-size: 18px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
+  .property-location { font-size: 13px; color: #94a3b8; margin-bottom: 12px; }
+  .property-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #334155;
+  }
+  .metric { font-size: 12px; color: #94a3b8; }
+  .metric-value { font-size: 15px; color: #f8fafc; font-weight: 600; margin-top: 2px; }
+  .property-group {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #1e3a8a;
+    color: #93c5fd;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .property-group.alvin { background: #14532d; color: #86efac; }
+  .property-group.rosenberg { background: #581c87; color: #d8b4fe; }
+  .property-group.humble { background: #7c2d12; color: #fdba74; }
+  .property-group.baytown { background: #134e4a; color: #5eead4; }
+  .property-group.southtexas { background: #7f1d1d; color: #fca5a5; }
+  .property-group.other { background: #334155; color: #cbd5e1; }
+
+  /* Property Detail */
+  .back-btn {
+    background: none;
+    color: #60a5fa;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 0;
+  }
+  .property-header {
+    background: #1e293b;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #334155;
+  }
+  .property-header h2 {
+    font-size: 24px;
+    color: #f8fafc;
+    margin-bottom: 4px;
+  }
+
+  .sub-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: #1e293b;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    overflow-x: auto;
+  }
+  .sub-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #94a3b8;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .sub-tab:hover { color: #e2e8f0; }
+  .sub-tab.active { background: #334155; color: #f8fafc; }
+
+  .panel {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    margin-bottom: 16px;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .panel-header h3 { font-size: 16px; color: #f8fafc; }
+
+  /* Forms */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-label { font-size: 12px; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .form-input, .form-select, .form-textarea {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+  .form-textarea { resize: vertical; min-height: 60px; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px; background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #334155; }
+  td { padding: 10px; border-bottom: 1px solid #334155; color: #e2e8f0; }
+  tr:hover td { background: #0f172a; }
+  td input, td select { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 13px; width: 100%; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-open { background: #422006; color: #fbbf24; }
+  .badge-progress { background: #1e3a8a; color: #93c5fd; }
+  .badge-done { background: #14532d; color: #86efac; }
+  .badge-overdue { background: #450a0a; color: #fca5a5; }
+  .badge-high { background: #450a0a; color: #fca5a5; }
+  .badge-med { background: #422006; color: #fbbf24; }
+  .badge-low { background: #1e3a8a; color: #93c5fd; }
+
+  .loading { text-align: center; padding: 40px; color: #64748b; }
+
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-bar select, .filter-bar input {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .modal-backdrop {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal {
+    background: #1e293b;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    padding: 24px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin-bottom: 16px; color: #f8fafc; }
+
+  .alert {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .alert-warn { background: #422006; color: #fbbf24; border: 1px solid #92400e; }
+  .alert-info { background: #1e3a8a; color: #93c5fd; border: 1px solid #1e40af; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Rockstar Capital · Asset Management</h1>
+    <div class="subtitle" id="header-subtitle">Loading...</div>
+    <div id="save-status" style="font-size: 11px; color: #4ade80; margin-top: 4px;">● Ready</div>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: end; gap: 6px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">View as</label>
+      <select id="am-filter" onchange="changeAMFilter(this.value)" style="background: #334155; border: 1px solid #475569; color: #f8fafc; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; min-width: 160px;">
+        <option value="all">All Asset Managers</option>
+      </select>
+    </div>
+    <div class="header-actions">
+    <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">Import Data</button>
+    <button class="btn btn-secondary" onclick="resetToSeed()" title="Reset all data back to the original T-12 import (DESTRUCTIVE)">Reset to Original</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" oninput="importData(event)">
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="main-tabs">
+  <div class="tab active" onclick="switchView('portfolio')">Portfolio Overview</div>
+  <div class="tab" onclick="switchView('investment')">Investment Performance</div>
+  <div class="tab" onclick="switchView('actions')">Action Items</div>
+  <div class="tab" onclick="switchView('walks')">Property Walks</div>
+  <div class="tab" onclick="switchView('financials')">Financial Summary</div>
+</div>
+
+<div class="container" id="main-content">
+  <div class="loading">Loading dashboard...</div>
+</div>
+
+<script>
+const SEED_DATA = {
+  "lakeview": {
+    "info": {
+      "name": "Lakeview at Westpark",
+      "group": "Houston",
+      "groupKey": "houston",
+      "city": "Houston",
+      "state": "TX",
+      "units": "298",
+      "yearBuilt": "2021",
+      "propertyType": "Multifamily",
+      "notes": "",
+      "acquisitionDate": "2022-06-16",
+      "purchasePrice": 70000000,
+      "totalEquity": "29308100",
+      "investors": 205,
+      "ltdDistributions": 6640500,
+      "origLoan": "50470000",
+      "currentLoan": "54036000",
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": "Class A: $29.3M (168 investors, acq 2022-06-16)",
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 484833.92,
+        "expenses": 176208.12,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 505454.02,
+        "expenses": 215832.76,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 492387.62,
+        "expenses": 186187.92,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 476625.63,
+        "expenses": 205036.46,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 487517.43,
+        "expenses": 184850.36,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 469154.88,
+        "expenses": 180208.01,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 478763.27,
+        "expenses": 199332.03,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 500469.37,
+        "expenses": 184060.51,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 471956.17,
+        "expenses": -286532.22,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 465439.63,
+        "expenses": 113119.42,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 492837.76,
+        "expenses": 122283.27,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 478372.58,
+        "expenses": 132200.37,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "88.55",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "87.21",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 87.21% | 60-day trend: 87.21% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "city-crossing": {
+    "info": {
+      "name": "City Crossing",
+      "group": "Houston",
+      "groupKey": "houston",
+      "city": "",
+      "state": "TX",
+      "units": "458",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Claudia | Regional/Multisite: Aaron",
+      "acquisitionDate": "2020-11-23",
+      "purchasePrice": 36800000,
+      "totalEquity": 14404900,
+      "investors": 83,
+      "ltdDistributions": 1325000,
+      "origLoan": 29250000,
+      "currentLoan": 29250000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 446916.95,
+        "expenses": 188155.94,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 470614.65,
+        "expenses": 238679.17,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 453143.32,
+        "expenses": 201265.25,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 416896.54,
+        "expenses": 216233.61,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 498171.65,
+        "expenses": 202746.04,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 482121.05,
+        "expenses": 188959.18,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 474357.01,
+        "expenses": 255865.55,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 514189.88,
+        "expenses": 241992.62,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 468583.38,
+        "expenses": 169799.44,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 484783.82,
+        "expenses": 214720.47,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 466418.35,
+        "expenses": 226017.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 483367.44,
+        "expenses": 227666,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "86.21",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "87.31",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 86.43% | 60-day trend: 85.78% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "green-meadows": {
+    "info": {
+      "name": "Green Meadows",
+      "group": "Houston",
+      "groupKey": "houston",
+      "city": "",
+      "state": "TX",
+      "units": "240",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Ashley | Regional/Multisite: Bonnie",
+      "acquisitionDate": "2015-02-27",
+      "purchasePrice": 14000000,
+      "totalEquity": 4170000,
+      "investors": 50,
+      "ltdDistributions": 10581108.29,
+      "origLoan": 19713000,
+      "currentLoan": 19713000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 308375.23,
+        "expenses": 148464.58,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 312702.56,
+        "expenses": 183480.2,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 349505.82,
+        "expenses": 161472.23,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 332401.48,
+        "expenses": 148429.76,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 362835.51,
+        "expenses": 148943.86,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 338336.44,
+        "expenses": 148223.24,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 342251.21,
+        "expenses": 165883.32,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 357859.24,
+        "expenses": 147286.32,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 338476.39,
+        "expenses": 33528.28,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 320074.56,
+        "expenses": 139910.9,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 349669.33,
+        "expenses": 170562.86,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 359195.49,
+        "expenses": 152834.76,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "90.34",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "94.12",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 93.28% | 60-day trend: 91.18% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "steeplechase": {
+    "info": {
+      "name": "Steeplechase",
+      "group": "Alvin",
+      "groupKey": "alvin",
+      "city": "",
+      "state": "TX",
+      "units": "171",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Debbie | Regional/Multisite: Debbie",
+      "acquisitionDate": "2019-10-11",
+      "purchasePrice": 13388000,
+      "totalEquity": 5000000,
+      "investors": 57,
+      "ltdDistributions": 1909820,
+      "origLoan": 10670000,
+      "currentLoan": 10670000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 248312.19,
+        "expenses": 71444.87,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 209408.06,
+        "expenses": 119825.06,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 217498.88,
+        "expenses": 112921.29,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 212303.72,
+        "expenses": 118134.69,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 225575.32,
+        "expenses": 122069.46,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 221160.7,
+        "expenses": 116790.11,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 241761.85,
+        "expenses": 130876.24,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 223505.86,
+        "expenses": 112383.71,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 198694.15,
+        "expenses": 45806.71,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 202352.03,
+        "expenses": 107501.1,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 215274.34,
+        "expenses": 112183.42,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 208629.65,
+        "expenses": 99369.27,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "85.88",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "84.71",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 82.94% | 60-day trend: 81.76% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "huntington-oaks": {
+    "info": {
+      "name": "Huntington Oaks",
+      "group": "Alvin",
+      "groupKey": "alvin",
+      "city": "",
+      "state": "TX",
+      "units": "152",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Debbie | Regional/Multisite: Debbie",
+      "acquisitionDate": "2021-12-22",
+      "purchasePrice": 15200000,
+      "totalEquity": 5500000,
+      "investors": 40,
+      "ltdDistributions": 0,
+      "origLoan": 11648000,
+      "currentLoan": 11648000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 173799.53,
+        "expenses": -71465.23,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 184419.51,
+        "expenses": 96602.79,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 168391.81,
+        "expenses": 84836.65,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 175481.95,
+        "expenses": 87255.9,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 171630.14,
+        "expenses": 89327.79,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 188643.8,
+        "expenses": 84245.47,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 176406.85,
+        "expenses": 96358.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 166005.85,
+        "expenses": 84044.27,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 186218.41,
+        "expenses": 48449.93,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 166212.86,
+        "expenses": 81070.03,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 174055.37,
+        "expenses": 86061.81,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 175117.36,
+        "expenses": 81555.81,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "88.74",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "91.39",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 87.42% | 60-day trend: 84.77% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "newport-oaks": {
+    "info": {
+      "name": "Newport Oaks",
+      "group": "Alvin",
+      "groupKey": "alvin",
+      "city": "",
+      "state": "TX",
+      "units": "168",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Maritza | Regional/Multisite: Maritza",
+      "acquisitionDate": "2019-01-22",
+      "purchasePrice": 11350000,
+      "totalEquity": 6640000,
+      "investors": 66,
+      "ltdDistributions": 738278,
+      "origLoan": 8700000,
+      "currentLoan": 8700000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": "Class A: $4.1M (37 investors, acq 2019-01-22) | Class P: $2.54M (29 investors, acq 2024-07-01)",
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 173327.09,
+        "expenses": 44092.68,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 174524.75,
+        "expenses": 100019.64,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 189800.23,
+        "expenses": 86333.45,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 172465.15,
+        "expenses": 87367.61,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 181774.43,
+        "expenses": 86660.94,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 173321.29,
+        "expenses": 84696.18,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 176754.25,
+        "expenses": 91188.7,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 175785.8,
+        "expenses": 81897.95,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 164498.83,
+        "expenses": 57965.99,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 163715.37,
+        "expenses": 83383.55,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 163455.53,
+        "expenses": 93224.79,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 173092.43,
+        "expenses": 91463.23,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "90.42",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "91.02",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 89.22% | 60-day trend: 86.83% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "meadow-park": {
+    "info": {
+      "name": "Meadow Park",
+      "group": "Alvin",
+      "groupKey": "alvin",
+      "city": "",
+      "state": "TX",
+      "units": "160",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Maritza | Regional/Multisite: Maritza",
+      "acquisitionDate": "2018-10-16",
+      "purchasePrice": 12500000,
+      "totalEquity": 5340000,
+      "investors": 50,
+      "ltdDistributions": 921361,
+      "origLoan": 10000000,
+      "currentLoan": 10000000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": "Class A: $4.1M (36 investors, acq 2018-10-16) | Class P: $1.24M (14 investors, acq 2024-03-15)",
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 181803.4,
+        "expenses": -72266.3,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 184683.88,
+        "expenses": 91919.58,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 187200.05,
+        "expenses": 92027.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 184527.25,
+        "expenses": 92366.5,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 183149.28,
+        "expenses": 89977.24,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 194816.26,
+        "expenses": 91798.56,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 204012.51,
+        "expenses": 100004.68,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 187033.86,
+        "expenses": 93566.67,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 185299.92,
+        "expenses": 70778.53,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 176039.57,
+        "expenses": 90860.64,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 173789.48,
+        "expenses": 92859.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 182125.65,
+        "expenses": 92438.7,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "88.68",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "94.34",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 94.34% | 60-day trend: 94.34% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "brookmore-hollow": {
+    "info": {
+      "name": "Brookmore Hollow",
+      "group": "Rosenberg",
+      "groupKey": "rosenberg",
+      "city": "",
+      "state": "TX",
+      "units": "104",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Leslie | Regional/Multisite: Bonnie",
+      "acquisitionDate": "2014-03-31",
+      "purchasePrice": 4100000,
+      "totalEquity": 1599000,
+      "investors": 21,
+      "ltdDistributions": 3575329.86,
+      "origLoan": 4940000,
+      "currentLoan": 4782919.22,
+      "ltdPrincipalPaid": 349907.45,
+      "ytdPrincipalPaid": 35800.73,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 123213.24,
+        "expenses": 51103.58,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 127280.62,
+        "expenses": 59544.6,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 120181.43,
+        "expenses": 55274.15,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 129810.28,
+        "expenses": 55452.88,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 134369.44,
+        "expenses": 55215.29,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 122455.59,
+        "expenses": 54078.01,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 111035.71,
+        "expenses": 56434.54,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 123483.29,
+        "expenses": 55052.76,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 138658.91,
+        "expenses": 41618.92,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 124548.79,
+        "expenses": 51222.63,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 121729.52,
+        "expenses": 52379.85,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 126723.34,
+        "expenses": 50097.45,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "92.23",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "94.17",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 92.23% | 60-day trend: 93.2% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "westwood-village": {
+    "info": {
+      "name": "Westwood Village",
+      "group": "Rosenberg",
+      "groupKey": "rosenberg",
+      "city": "",
+      "state": "TX",
+      "units": "272",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Erika | Regional/Multisite: Bonnie",
+      "acquisitionDate": "2016-07-07",
+      "purchasePrice": 20400000,
+      "totalEquity": 6852000,
+      "investors": 60,
+      "ltdDistributions": 10185572.44,
+      "origLoan": 22600000,
+      "currentLoan": 22600000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "assignedTo": "Cody"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 331590,
+        "expenses": 154769.15,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 335621.11,
+        "expenses": 166877.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 358567.93,
+        "expenses": 156127.37,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 331597.2,
+        "expenses": 163709.96,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 338926.59,
+        "expenses": 154880.52,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 350829.28,
+        "expenses": 152884.12,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 337634.15,
+        "expenses": 160345.43,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 345984.42,
+        "expenses": 156908.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 385429.17,
+        "expenses": 198036.01,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 333091.19,
+        "expenses": 155135.95,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 362696.87,
+        "expenses": 158398.04,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 367516.15,
+        "expenses": 153962.17,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "92.99",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "91.88",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 91.14% | 60-day trend: 90.04% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "bender-hollow": {
+    "info": {
+      "name": "Bender Hollow",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "102",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Oneida | Regional/Multisite: Sole",
+      "acquisitionDate": "2016-05-18",
+      "purchasePrice": 7000000,
+      "totalEquity": 2350000,
+      "investors": 5,
+      "ltdDistributions": 1140000,
+      "origLoan": 5695000,
+      "currentLoan": 5323595,
+      "ltdPrincipalPaid": 606332,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 119629.29,
+        "expenses": 58663.4,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 115129.91,
+        "expenses": 13428.18,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 119299.06,
+        "expenses": 61365.03,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 126401.82,
+        "expenses": 65286.9,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 123340.79,
+        "expenses": 56658.64,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 122322.02,
+        "expenses": 58663.61,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 123711.72,
+        "expenses": 62958.47,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 127355.14,
+        "expenses": 60012.84,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 131430.78,
+        "expenses": 53703.27,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 121049.89,
+        "expenses": 60103.91,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 115756.73,
+        "expenses": 58684.28,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 124948.9,
+        "expenses": 54637.68,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "98.02",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "98.02",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 97.03% | 60-day trend: 97.03% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "waterchase": {
+    "info": {
+      "name": "Waterchase",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "118",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Lilliana | Regional/Multisite: Sole",
+      "acquisitionDate": "2025-08-26",
+      "purchasePrice": 13500000,
+      "totalEquity": 6525000,
+      "investors": 56,
+      "ltdDistributions": 0,
+      "origLoan": "",
+      "currentLoan": "",
+      "ltdPrincipalPaid": "",
+      "ytdPrincipalPaid": "",
+      "equityClasses": "Rockstar Waterchase LLC (acq 2025-08-26) \u2014 replaces Waterchase Apartments LLC which was disposed on the same date with $14.4M LTD distributions (9.60x MOIC to original investors)"
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 156093.88,
+        "expenses": 72264.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 148322.36,
+        "expenses": 89285.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 161477.84,
+        "expenses": 79236.96,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 151517.58,
+        "expenses": 77923.71,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": -1072875.13,
+        "expenses": -558587.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 146978.12,
+        "expenses": 67337.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 151301.14,
+        "expenses": 89309.68,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 165037.84,
+        "expenses": 81787.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 134133.73,
+        "expenses": 56414.5,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 146722.85,
+        "expenses": 76132.71,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 145210.27,
+        "expenses": 81091.05,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 169634.88,
+        "expenses": 71504.54,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "93.1",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "91.38",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 93.1% | 60-day trend: 91.38% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "deerbrook-forest": {
+    "info": {
+      "name": "Deerbrook Forest",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "152",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Wendy | Regional/Multisite: Sole",
+      "acquisitionDate": "2015-09-30",
+      "purchasePrice": 9500000,
+      "totalEquity": 5490000,
+      "investors": 50,
+      "ltdDistributions": 6960000,
+      "origLoan": 10575000,
+      "currentLoan": 10443634,
+      "ltdPrincipalPaid": 464146,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 178512.64,
+        "expenses": 76396.17,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 193640.05,
+        "expenses": 93301.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 204780.49,
+        "expenses": 86203.91,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 179333.84,
+        "expenses": 82982.05,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 214803.38,
+        "expenses": 83286.02,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 196506.83,
+        "expenses": 85168.71,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 166662.68,
+        "expenses": 78029.28,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 167568.72,
+        "expenses": 84197.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 176705.99,
+        "expenses": 49980.49,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 189908.13,
+        "expenses": 83729.85,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 167504.66,
+        "expenses": 86616.8,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 173481.19,
+        "expenses": 79698.95,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "88.08",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "87.42",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 87.42% | 60-day trend: 86.75% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "deerbrook-garden": {
+    "info": {
+      "name": "Deerbrook Garden",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "162",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Liz | Regional/Multisite: Sole",
+      "acquisitionDate": "2013-04-30",
+      "purchasePrice": 6750000,
+      "totalEquity": 3132000,
+      "investors": 37,
+      "ltdDistributions": 6703914,
+      "origLoan": 9275000,
+      "currentLoan": 8500092,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 174857.85,
+        "expenses": 86449.78,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 169176.02,
+        "expenses": 106820.77,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 180658.65,
+        "expenses": 95275.57,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 195406.25,
+        "expenses": 86292.6,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 178864.15,
+        "expenses": 93654.31,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 184999.93,
+        "expenses": 56584.6,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 205867.77,
+        "expenses": 106744.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 183152.0,
+        "expenses": 90541.03,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 182348.37,
+        "expenses": 72609.39,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 184460.78,
+        "expenses": 89246.27,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 178668.68,
+        "expenses": 90728.42,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 183577.8,
+        "expenses": 87674.27,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "95.0",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "93.75",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 95.0% | 60-day trend: 92.5% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "parkside": {
+    "info": {
+      "name": "Parkside",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "160",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Liz | Regional/Multisite: Sole",
+      "acquisitionDate": "2017-07-11",
+      "purchasePrice": 11300000,
+      "totalEquity": 4445000,
+      "investors": 36,
+      "ltdDistributions": 1448400,
+      "origLoan": 8757000,
+      "currentLoan": 8365471,
+      "ltdPrincipalPaid": 734248,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 176410.32,
+        "expenses": 93733.17,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 186522.73,
+        "expenses": 106766.75,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 177748.49,
+        "expenses": 98265.51,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 197931.68,
+        "expenses": 98625.65,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 200267.09,
+        "expenses": 93828.32,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 188997.32,
+        "expenses": 55526.37,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 202167.73,
+        "expenses": 108498.02,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 191622.61,
+        "expenses": 94333.74,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 190262.01,
+        "expenses": 77620.39,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 202119.15,
+        "expenses": 94085.34,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 202421.37,
+        "expenses": 94910.1,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 191490.55,
+        "expenses": 92170.01,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "98.11",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "97.48",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 96.86% | 60-day trend: 95.6% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "meadowbrook": {
+    "info": {
+      "name": "Meadowbrook",
+      "group": "Humble",
+      "groupKey": "humble",
+      "assignedTo": "Tiffany",
+      "city": "Humble",
+      "state": "TX",
+      "units": "260",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Oneida | Regional/Multisite: Sole",
+      "acquisitionDate": "2017-07-11",
+      "purchasePrice": 18000000,
+      "totalEquity": 7235000,
+      "investors": 58,
+      "ltdDistributions": 3502499,
+      "origLoan": 13950000,
+      "currentLoan": 13326289,
+      "ltdPrincipalPaid": 1169666,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 276975.77,
+        "expenses": 146738.5,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 291133.03,
+        "expenses": 164418.57,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 293556.24,
+        "expenses": 146715.91,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 305428.86,
+        "expenses": 144296.79,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 331191.39,
+        "expenses": 149592.3,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 325952.68,
+        "expenses": 65096.83,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 317136.06,
+        "expenses": 93073.77,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 320847.25,
+        "expenses": 146404.12,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 321649.42,
+        "expenses": 99805.72,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 332797.97,
+        "expenses": 141808.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 320602.01,
+        "expenses": 147704.09,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 349765.24,
+        "expenses": 143632.8,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "98.84",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "97.67",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 98.45% | 60-day trend: 96.12% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "cedar-ridge": {
+    "info": {
+      "name": "Cedar Ridge",
+      "group": "Baytown",
+      "groupKey": "baytown",
+      "assignedTo": "Tiffany",
+      "city": "Baytown",
+      "state": "TX",
+      "units": "276",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Keshia | Regional/Multisite: Aaron",
+      "acquisitionDate": "2016-06-10",
+      "purchasePrice": 20700000,
+      "totalEquity": 6793000,
+      "investors": 65,
+      "ltdDistributions": 10419999,
+      "origLoan": 23541000,
+      "currentLoan": 23541000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 292976.66,
+        "expenses": 157278.9,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 273685.56,
+        "expenses": 179446.44,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 309038.96,
+        "expenses": 157554.8,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 319813.49,
+        "expenses": 158957.83,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 320455.2,
+        "expenses": 160837.24,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 337186.28,
+        "expenses": 76215.82,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 332556.18,
+        "expenses": 167253.22,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 321039.28,
+        "expenses": 160111.41,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 328309.8,
+        "expenses": 130056.59,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 327239.85,
+        "expenses": 154429.23,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 340446.06,
+        "expenses": 156689.53,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 344318.55,
+        "expenses": 153099.79,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "91.54",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "91.18",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 89.71% | 60-day trend: 86.76% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "reserve-on-garth": {
+    "info": {
+      "name": "Reserve on Garth",
+      "group": "Baytown",
+      "groupKey": "baytown",
+      "assignedTo": "Tiffany",
+      "city": "Baytown",
+      "state": "TX",
+      "units": "256",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Gracie | Regional/Multisite: Aaron",
+      "acquisitionDate": "2016-01-25",
+      "purchasePrice": 14250000,
+      "totalEquity": 5075000,
+      "investors": 47,
+      "ltdDistributions": 5284999,
+      "origLoan": 14900000,
+      "currentLoan": 14715564,
+      "ltdPrincipalPaid": 745338,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 259928.7,
+        "expenses": 120107.08,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 261654.75,
+        "expenses": 154040.76,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 273061.52,
+        "expenses": 132326.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 273115.87,
+        "expenses": 137785.45,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 268806.17,
+        "expenses": 138331.5,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 306837.46,
+        "expenses": 130449.59,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 286967.22,
+        "expenses": 156462.65,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 284925.86,
+        "expenses": 132668.91,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 288292.64,
+        "expenses": 83626.94,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 297858.66,
+        "expenses": 127204.32,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 290796.7,
+        "expenses": 123633.42,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 286459.9,
+        "expenses": 126071.82,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "93.73",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "94.12",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 94.12% | 60-day trend: 92.94% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "valencia-place": {
+    "info": {
+      "name": "Valencia Place",
+      "group": "Houston",
+      "groupKey": "houston",
+      "assignedTo": "Tiffany",
+      "city": "Houston",
+      "state": "TX",
+      "units": "246",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Tonice | Regional/Multisite: Aaron",
+      "acquisitionDate": "2021-08-06",
+      "purchasePrice": 46000000,
+      "totalEquity": 14549000,
+      "investors": 84,
+      "ltdDistributions": 2090000,
+      "origLoan": 35040000,
+      "currentLoan": 35040000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 424121.05,
+        "expenses": 179443.5,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 403379.1,
+        "expenses": 190619.22,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 416187.35,
+        "expenses": 175671.81,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 403347.43,
+        "expenses": 182781.09,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 408928.06,
+        "expenses": 180635.85,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 404987.69,
+        "expenses": 64576.83,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 397406.75,
+        "expenses": 192355.28,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 404933.75,
+        "expenses": 183199.92,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 400636.41,
+        "expenses": 167058.26,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 389523.94,
+        "expenses": 175157.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 392521.05,
+        "expenses": 175877.88,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 391740.72,
+        "expenses": 168130.57,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "92.62",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "96.31",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 97.13% | 60-day trend: 97.54% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "churchill-square": {
+    "info": {
+      "name": "Churchill Square",
+      "group": "South Texas",
+      "groupKey": "southtexas",
+      "assignedTo": "Kim",
+      "city": "",
+      "state": "TX",
+      "units": "107",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Melissa | Regional/Multisite: Kim",
+      "acquisitionDate": "2021-07-20",
+      "purchasePrice": 8500000,
+      "totalEquity": 2823000,
+      "investors": 33,
+      "ltdDistributions": 0,
+      "origLoan": 6800000,
+      "currentLoan": 6800000,
+      "ltdPrincipalPaid": 0,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 106703.42,
+        "expenses": 39905.79,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 117351.12,
+        "expenses": 50328.35,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 119305.16,
+        "expenses": 45803.64,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 110579.2,
+        "expenses": 45327.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 115657.87,
+        "expenses": 44305.78,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 100191.47,
+        "expenses": 13670.45,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 117481.47,
+        "expenses": 48372.37,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 120980.74,
+        "expenses": 47160.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 107891.49,
+        "expenses": 47299.45,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 123157.8,
+        "expenses": 45971.56,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 109516.7,
+        "expenses": 45389.07,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 124011.91,
+        "expenses": 45249.93,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "94.34",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "96.23",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 96.23% | 60-day trend: 97.17% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "oak-tree": {
+    "info": {
+      "name": "Oak Tree",
+      "group": "South Texas",
+      "groupKey": "southtexas",
+      "assignedTo": "Kim",
+      "city": "",
+      "state": "TX",
+      "units": "192",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Georgia | Regional/Multisite: Kim",
+      "acquisitionDate": "2019-05-31",
+      "purchasePrice": 21000000,
+      "totalEquity": 6775000,
+      "investors": 44,
+      "ltdDistributions": 2799900,
+      "origLoan": 15825000,
+      "currentLoan": 15825000,
+      "ltdPrincipalPaid": 525499,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 262376.7,
+        "expenses": 115779.41,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 250206.46,
+        "expenses": 121016.54,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 256962.27,
+        "expenses": 117226.05,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 257363.47,
+        "expenses": 107400.31,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 261017.08,
+        "expenses": 113147.22,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 265232.18,
+        "expenses": 105529.96,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 277750.95,
+        "expenses": 118425.91,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 267148.34,
+        "expenses": 104915.51,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 256730.18,
+        "expenses": 74417.06,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 260885.37,
+        "expenses": 105463.9,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 264110.06,
+        "expenses": 90281.03,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 271756.37,
+        "expenses": 105447.17,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "96.34",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "96.86",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 95.29% | 60-day trend: 95.29% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "kingsville-pointe": {
+    "info": {
+      "name": "Kingsville Pointe",
+      "group": "South Texas",
+      "groupKey": "southtexas",
+      "assignedTo": "Kim",
+      "city": "Kingsville",
+      "state": "TX",
+      "units": "241",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Sylest | Regional/Multisite: Georgia",
+      "acquisitionDate": "2022-02-18",
+      "purchasePrice": 16600000,
+      "totalEquity": 6299000,
+      "investors": 70,
+      "ltdDistributions": 0,
+      "origLoan": 14180603,
+      "currentLoan": 14180603,
+      "ltdPrincipalPaid": 429280,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 243146.03,
+        "expenses": 166894.93,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 249457.18,
+        "expenses": 166013.8,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 284488.14,
+        "expenses": 190761.73,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 285600.31,
+        "expenses": 193253.97,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 278217.52,
+        "expenses": 187206.54,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 307424.49,
+        "expenses": 187474.11,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 325427.7,
+        "expenses": 196328.11,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 311128.63,
+        "expenses": 174183.41,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 315798.47,
+        "expenses": 81215.85,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 292258.48,
+        "expenses": 157624.83,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 299864.35,
+        "expenses": 159076.27,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 264460.69,
+        "expenses": 156786.87,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "85.0",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "85.42",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 87.5% | 60-day trend: 86.25% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  },
+  "apple-creek": {
+    "info": {
+      "name": "Apple Creek",
+      "group": "South Texas",
+      "groupKey": "southtexas",
+      "assignedTo": "Kim",
+      "city": "",
+      "state": "TX",
+      "units": "120",
+      "yearBuilt": "",
+      "propertyType": "Multifamily",
+      "notes": "Property Manager: Amber | Regional/Multisite: Kim",
+      "acquisitionDate": "2022-02-25",
+      "purchasePrice": 8700000,
+      "totalEquity": 3200000,
+      "investors": 34,
+      "ltdDistributions": 0,
+      "origLoan": 7366867,
+      "currentLoan": 7366867,
+      "ltdPrincipalPaid": 264013,
+      "ytdPrincipalPaid": 0,
+      "equityClasses": ""
+    },
+    "financials": [
+      {
+        "period": "2025-04",
+        "income": 109949.91,
+        "expenses": 60396.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-05",
+        "income": 119978.94,
+        "expenses": 55668.66,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-06",
+        "income": 123192.04,
+        "expenses": 59178.39,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-07",
+        "income": 124702.32,
+        "expenses": 56164.95,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-08",
+        "income": 127269.17,
+        "expenses": 60785.47,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-09",
+        "income": 130883.55,
+        "expenses": 60263.99,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-10",
+        "income": 123375.86,
+        "expenses": 67225.8,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-11",
+        "income": 123371.21,
+        "expenses": 60594.41,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2025-12",
+        "income": 124132.87,
+        "expenses": 60153.19,
+        "budgetNOI": "",
+        "notes": "Adjusted: replaced original Dec figures (which included year-end cleanups) with values from the Jan-Dec 2025 T-12"
+      },
+      {
+        "period": "2026-01",
+        "income": 142705.84,
+        "expenses": 55796.09,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-02",
+        "income": 125138.1,
+        "expenses": 60685.05,
+        "budgetNOI": "",
+        "notes": ""
+      },
+      {
+        "period": "2026-03",
+        "income": 127317.22,
+        "expenses": 51638.99,
+        "budgetNOI": "",
+        "notes": ""
+      }
+    ],
+    "occupancy": [
+      {
+        "date": "2026-03-31",
+        "occupancy": "89.08",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30 days prior reading from AM Overview"
+      },
+      {
+        "date": "2026-04-30",
+        "occupancy": "94.96",
+        "avgRent": "",
+        "concessions": "",
+        "newLeases": "",
+        "moveOuts": "",
+        "notes": "30-day projected: 90.76% | 60-day trend: 88.24% | Source: AM Overview 04/30/2026"
+      }
+    ],
+    "walks": [],
+    "actions": []
+  }
+};
+
+const PROPERTIES_INIT = [
+  {
+    "id": "lakeview",
+    "name": "Lakeview at Westpark",
+    "group": "Houston",
+    "groupKey": "houston"
+  },
+  {
+    "id": "city-crossing",
+    "name": "City Crossing",
+    "group": "Houston",
+    "groupKey": "houston"
+  },
+  {
+    "id": "green-meadows",
+    "name": "Green Meadows",
+    "group": "Houston",
+    "groupKey": "houston"
+  },
+  {
+    "id": "steeplechase",
+    "name": "Steeplechase",
+    "group": "Alvin",
+    "groupKey": "alvin"
+  },
+  {
+    "id": "huntington-oaks",
+    "name": "Huntington Oaks",
+    "group": "Alvin",
+    "groupKey": "alvin"
+  },
+  {
+    "id": "newport-oaks",
+    "name": "Newport Oaks",
+    "group": "Alvin",
+    "groupKey": "alvin"
+  },
+  {
+    "id": "meadow-park",
+    "name": "Meadow Park",
+    "group": "Alvin",
+    "groupKey": "alvin"
+  },
+  {
+    "id": "brookmore-hollow",
+    "name": "Brookmore Hollow",
+    "group": "Rosenberg",
+    "groupKey": "rosenberg"
+  },
+  {
+    "id": "westwood-village",
+    "name": "Westwood Village",
+    "group": "Rosenberg",
+    "groupKey": "rosenberg"
+  },
+  {
+    "id": "bender-hollow",
+    "name": "Bender Hollow",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "waterchase",
+    "name": "Waterchase",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "deerbrook-forest",
+    "name": "Deerbrook Forest",
+    "group": "Houston",
+    "groupKey": "houston"
+  },
+  {
+    "id": "deerbrook-garden",
+    "name": "Deerbrook Garden",
+    "group": "Houston",
+    "groupKey": "houston"
+  },
+  {
+    "id": "parkside",
+    "name": "Parkside",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "meadowbrook",
+    "name": "Meadowbrook",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "cedar-ridge",
+    "name": "Cedar Ridge",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "reserve-on-garth",
+    "name": "Reserve on Garth",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "valencia-place",
+    "name": "Valencia Place",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "churchill-square",
+    "name": "Churchill Square",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "oak-tree",
+    "name": "Oak Tree",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "kingsville-pointe",
+    "name": "Kingsville Pointe",
+    "group": "Other",
+    "groupKey": "other"
+  },
+  {
+    "id": "apple-creek",
+    "name": "Apple Creek",
+    "group": "Other",
+    "groupKey": "other"
+  }
+];
+
+let state = {
+  view: 'portfolio',
+  selectedProperty: null,
+  subTab: 'overview',
+  properties: {},
+  loading: true,
+  amFilter: 'all'  // 'all' or specific AM name
+};
+
+// Initialize property data structure
+function initPropertyData() {
+  const data = {};
+  PROPERTIES_INIT.forEach(p => {
+    data[p.id] = {
+      info: {
+        name: p.name,
+        group: p.group,
+        groupKey: p.groupKey,
+        city: '',
+        state: 'TX',
+        units: '',
+        yearBuilt: '',
+        propertyType: 'Multifamily',
+        notes: ''
+      },
+      financials: [],
+      occupancy: [],
+      walks: [],
+      actions: []
+    };
+  });
+  return data;
+}
+
+// Storage helpers
+async function loadData() {
+  try {
+    // Load saved AM filter preference
+    try {
+      const filterPref = await _idbGet('amFilter');
+      if (filterPref) state.amFilter = filterPref;
+    } catch(e) {}
+    
+    const data = await _idbGet('current');
+    if (data) {
+      state.properties = JSON.parse(data);
+      // Add any missing properties using the full SEED_DATA (includes financials, investment data, etc.)
+      // This makes sure if a new property is added to SEED_DATA, existing users get it pre-populated
+      let addedAny = false;
+      PROPERTIES_INIT.forEach(p => {
+        if (!state.properties[p.id]) {
+          if (SEED_DATA[p.id]) {
+            // Use the rich seed data (financials, occupancy, investment info)
+            state.properties[p.id] = JSON.parse(JSON.stringify(SEED_DATA[p.id]));
+            addedAny = true;
+          } else {
+            // Fall back to empty placeholder
+            const init = initPropertyData();
+            state.properties[p.id] = init[p.id];
+            addedAny = true;
+          }
+        }
+      });
+      // Apply any pending one-time patches
+      await applyPendingPatches();
+      // Persist if we added missing properties
+      if (addedAny) {
+        await _idbSet('current', JSON.stringify(state.properties)).catch(() => {});
+      }
+    } else {
+      // First-ever load — seed
+      state.properties = JSON.parse(JSON.stringify(SEED_DATA));
+      await _idbSet('current', JSON.stringify(state.properties)).catch(() => {});
+    }
+  } catch (e) {
+    console.error('loadData error:', e);
+    state.properties = JSON.parse(JSON.stringify(SEED_DATA));
+  }
+  state.loading = false;
+  render();
+  setSaveStatus('saved');
+}
+
+// Pending patches: applied automatically on first load after this version of the dashboard
+// Each patch has a unique id so it only runs once. Add new patches to PENDING_PATCHES below.
+const PENDING_PATCHES = [
+  {
+    id: 'patch-2026-05-04-waterchase-note-moic',
+    description: 'Update Waterchase equityClasses note to use MOIC instead of DPI',
+    apply: (props) => {
+      if (props.waterchase && props.waterchase.info && props.waterchase.info.equityClasses) {
+        props.waterchase.info.equityClasses = props.waterchase.info.equityClasses.replace(
+          '9.60x DPI to original investors',
+          '9.60x MOIC to original investors'
+        );
+      }
+    }
+  },
+  {
+    id: 'patch-2026-05-04-deerbrook-to-humble',
+    description: 'Move Deerbrook Forest & Deerbrook Garden to Humble submarket',
+    apply: (props) => {
+      ['deerbrook-forest', 'deerbrook-garden'].forEach(pid => {
+        if (props[pid] && props[pid].info) {
+          props[pid].info.city = 'Humble';
+          props[pid].info.group = 'Humble';
+          props[pid].info.groupKey = 'humble';
+        }
+      });
+    }
+  },
+
+  {
+    id: 'patch-2026-05-04-update-locations',
+    description: 'Update property locations: Humble (Tiffany), Baytown (Cedar Ridge & Reserve on Garth), Houston (Valencia), South Texas (Kim)',
+    apply: (props) => {
+      const updates = {
+        "bender-hollow": {
+                "city": "Humble",
+                "group": "Humble",
+                "groupKey": "humble"
+        },
+        "waterchase": {
+                "city": "Humble",
+                "group": "Humble",
+                "groupKey": "humble"
+        },
+        "parkside": {
+                "city": "Humble",
+                "group": "Humble",
+                "groupKey": "humble"
+        },
+        "meadowbrook": {
+                "city": "Humble",
+                "group": "Humble",
+                "groupKey": "humble"
+        },
+        "cedar-ridge": {
+                "city": "Baytown",
+                "group": "Baytown",
+                "groupKey": "baytown"
+        },
+        "reserve-on-garth": {
+                "city": "Baytown",
+                "group": "Baytown",
+                "groupKey": "baytown"
+        },
+        "valencia-place": {
+                "city": "Houston",
+                "group": "Houston",
+                "groupKey": "houston"
+        },
+        "churchill-square": {
+                "group": "South Texas",
+                "groupKey": "southtexas"
+        },
+        "oak-tree": {
+                "group": "South Texas",
+                "groupKey": "southtexas"
+        },
+        "kingsville-pointe": {
+                "city": "Kingsville",
+                "group": "South Texas",
+                "groupKey": "southtexas"
+        },
+        "apple-creek": {
+                "group": "South Texas",
+                "groupKey": "southtexas"
+        }
+};
+      Object.keys(updates).forEach(pid => {
+        if (props[pid] && props[pid].info) {
+          Object.assign(props[pid].info, updates[pid]);
+        }
+      });
+    }
+  },
+  {
+    id: 'patch-v2-2026-05-04-full-sync',
+    description: 'Full sync: assign AMs, rename Lakeview, update Waterchase LLC, backfill empty properties',
+    apply: (props) => {
+      const codyProps = ["lakeview", "city-crossing", "green-meadows", "steeplechase", "huntington-oaks", "newport-oaks", "meadow-park", "brookmore-hollow", "westwood-village"];
+      const tiffanyProps = ["bender-hollow", "waterchase", "deerbrook-forest", "deerbrook-garden", "parkside", "meadowbrook", "cedar-ridge", "reserve-on-garth", "valencia-place"];
+      const kimProps = ["churchill-square", "oak-tree", "kingsville-pointe", "apple-creek"];
+      
+      // 1. Assign asset managers (overwrites whatever was there, so this is idempotent)
+      codyProps.forEach(pid => {
+        if (props[pid] && props[pid].info) {
+          props[pid].info.assignedTo = 'Cody';
+        }
+      });
+      tiffanyProps.forEach(pid => {
+        if (props[pid] && props[pid].info) {
+          props[pid].info.assignedTo = 'Tiffany';
+        }
+      });
+      kimProps.forEach(pid => {
+        if (props[pid] && props[pid].info) {
+          props[pid].info.assignedTo = 'Kim';
+        }
+      });
+      
+      // 2. Backfill empty Tiffany/Kim properties from SEED_DATA
+      [...tiffanyProps, ...kimProps].forEach(pid => {
+        if (!props[pid]) return;
+        const existing = props[pid];
+        const isEmpty = (!existing.financials || existing.financials.length === 0) && 
+                        (!existing.info || !existing.info.units);
+        if (isEmpty && SEED_DATA[pid]) {
+          // Preserve assignedTo (just set above)
+          const am = existing.info ? existing.info.assignedTo : null;
+          props[pid] = JSON.parse(JSON.stringify(SEED_DATA[pid]));
+          if (am) props[pid].info.assignedTo = am;
+        }
+      });
+      
+      // 3. Rename Lakeview → Lakeview at Westpark
+      if (props.lakeview && props.lakeview.info) {
+        props.lakeview.info.name = 'Lakeview at Westpark';
+      }
+      
+      // 4. Update Waterchase to Rockstar Waterchase LLC investment data
+      if (props.waterchase && props.waterchase.info) {
+        const w = props.waterchase.info;
+        // Only apply if it still has the old Waterchase Apartments LLC data
+        if (w.acquisitionDate === '2010-03-29' || w.purchasePrice === 2900000 || w.purchasePrice === '2900000') {
+          w.acquisitionDate = '2025-08-26';
+          w.purchasePrice = 13500000;
+          w.totalEquity = 6525000;
+          w.investors = 56;
+          w.ltdDistributions = 0;
+          w.origLoan = '';
+          w.currentLoan = '';
+          w.ltdPrincipalPaid = '';
+          w.ytdPrincipalPaid = '';
+          w.equityClasses = 'Rockstar Waterchase LLC (acq 2025-08-26) — replaces Waterchase Apartments LLC which was disposed on the same date with $14.4M LTD distributions (9.60x MOIC to original investors)';
+        }
+      }
+    }
+  }
+];
+async function applyPendingPatches() {
+  let appliedAny = false;
+  let appliedDescriptions = [];
+  for (const patch of PENDING_PATCHES) {
+    const key = 'patch-applied-' + patch.id;
+    try {
+      const alreadyApplied = await _idbGet(key);
+      if (alreadyApplied) continue;
+    } catch(e) {}
+    try {
+      patch.apply(state.properties);
+      await _idbSet(key, '1');
+      appliedAny = true;
+      appliedDescriptions.push(patch.description);
+      console.log('Applied patch:', patch.id);
+    } catch(e) {
+      console.error('Patch failed:', patch.id, e);
+    }
+  }
+  if (appliedAny) {
+    await _idbSet('current', JSON.stringify(state.properties));
+    // Show a non-blocking notification
+    setTimeout(() => {
+      const msg = appliedDescriptions.length === 1
+        ? appliedDescriptions[0]
+        : 'Auto-applied ' + appliedDescriptions.length + ' updates:\n• ' + appliedDescriptions.join('\n• ');
+      console.log('Updates applied:', msg);
+    }, 100);
+  }
+}
+
+async function resetToSeed() {
+  const msg = '⚠️ DANGER: This will REPLACE all your current data with the original baseline.\n\n' +
+              'All edits, action items, walks, and updates you have made will be PERMANENTLY LOST.\n\n' +
+              'Strongly recommended: click Cancel and use "Export Data" first to back up.\n\n' +
+              'Continue with reset?';
+  if (!confirm(msg)) return;
+  if (!confirm('Last chance — are you SURE you want to wipe your data and reset to baseline?')) return;
+  state.properties = JSON.parse(JSON.stringify(SEED_DATA));
+  await _idbSet('current', JSON.stringify(state.properties));
+  state.selectedProperty = null;
+  state.view = 'portfolio';
+  render();
+  alert('Data reset to baseline.');
+}
+
+// ===== Storage layer using IndexedDB (always available, no rate limits) =====
+const DB_NAME = 'RockstarAssetMgmt';
+const DB_VERSION = 1;
+const STORE_NAME = 'portfolio';
+let _db = null;
+
+function _openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) { resolve(_db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function _idbGet(key) {
+  const db = await _openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function _idbSet(key, value) {
+  const db = await _openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+let _saveTimer = null;
+let _savePending = false;
+let _saveInFlight = false;
+let _lastError = null;
+
+function setSaveStatus(status, errMsg) {
+  const el = document.getElementById('save-status');
+  if (!el) return;
+  el.style.cursor = 'default';
+  el.onclick = null;
+  if (status === 'pending') {
+    el.textContent = '● Editing...';
+    el.style.color = '#94a3b8';
+    el.title = 'Will save in 1 second';
+  } else if (status === 'saving') {
+    el.textContent = '● Saving...';
+    el.style.color = '#fbbf24';
+  } else if (status === 'saved') {
+    el.textContent = '● Saved';
+    el.style.color = '#4ade80';
+    el.title = 'All changes saved to browser';
+  } else if (status === 'error') {
+    el.textContent = '● Save Error (click)';
+    el.style.color = '#f87171';
+    el.style.cursor = 'pointer';
+    el.title = errMsg || 'Save failed';
+    el.onclick = () => {
+      alert('Save error: ' + (errMsg || 'Unknown') + '\n\nYour data is still in memory. Click Export Data NOW to download a backup file.');
+      _doSave();
+    };
+  }
+}
+
+function saveData() {
+  _savePending = true;
+  setSaveStatus('pending');
+  if (_saveTimer) clearTimeout(_saveTimer);
+  // Short debounce — IndexedDB has no rate limits
+  _saveTimer = setTimeout(() => _doSave(), 1000);
+}
+
+async function _doSave() {
+  if (_saveInFlight) return;
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  _saveInFlight = true;
+  setSaveStatus('saving');
+  try {
+    await _idbSet('current', JSON.stringify(state.properties));
+    _savePending = false;
+    _lastError = null;
+    setSaveStatus('saved');
+  } catch (e) {
+    _lastError = e && e.message ? e.message : String(e);
+    console.error('Save failed:', e);
+    setSaveStatus('error', _lastError);
+    setTimeout(() => { if (_savePending) _doSave(); }, 5000);
+  } finally {
+    _saveInFlight = false;
+  }
+}
+
+async function _forceSave() {
+  if (!_savePending) return;
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  await _doSave();
+}
+
+// Listen for events that mean the user might be leaving
+window.addEventListener('beforeunload', (e) => {
+  if (_savePending) {
+    // Try to save synchronously via IndexedDB (fire-and-forget)
+    try {
+      _idbSet('current', JSON.stringify(state.properties)).catch(() => {});
+    } catch (err) {}
+    e.preventDefault();
+    e.returnValue = 'You have unsaved changes. Are you sure?';
+    return e.returnValue;
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') _forceSave();
+});
+
+window.addEventListener('blur', () => _forceSave());
+window.addEventListener('pagehide', () => _forceSave());
+
+async function restoreFromBackup() {
+  alert('Auto-backup is no longer used. Use Export Data regularly to keep manual backups, and Import Data to restore them.');
+}
+
+function switchView(view) {
+  state.view = view;
+  state.selectedProperty = null;
+  render();
+}
+
+function selectProperty(id) {
+  state.selectedProperty = id;
+  state.subTab = 'overview';
+  render();
+}
+
+function backToPortfolio() {
+  state.selectedProperty = null;
+  render();
+}
+
+function switchSubTab(tab) {
+  state.subTab = tab;
+  render();
+}
+
+// === AM Filter Logic ===
+function getAllAMs() {
+  const ams = new Set();
+  Object.values(state.properties).forEach(p => {
+    const am = p.info.assignedTo;
+    if (am) ams.add(am);
+  });
+  return Array.from(ams).sort();
+}
+
+function getFilteredProperties() {
+  // Returns [id, propertyData] entries filtered by current AM selection
+  const all = Object.entries(state.properties);
+  if (state.amFilter === 'all') return all;
+  return all.filter(([_, p]) => p.info.assignedTo === state.amFilter);
+}
+
+function changeAMFilter(value) {
+  state.amFilter = value;
+  // Persist preference (separate from portfolio data, so reset doesn't clear it)
+  try { _idbSet('amFilter', value).catch(() => {}); } catch(e) {}
+  state.selectedProperty = null;  // Clear property selection so user lands on filtered overview
+  render();
+}
+
+function populateAMFilter() {
+  const select = document.getElementById('am-filter');
+  if (!select) return;
+  const ams = getAllAMs();
+  // Preserve current selection
+  const currentValue = state.amFilter;
+  select.innerHTML = '<option value="all">All Asset Managers</option>' +
+    ams.map(am => `<option value="${am}">${am}</option>`).join('');
+  select.value = currentValue;
+}
+
+// Calculate metrics
+function calcNOI(financials) {
+  if (!financials || financials.length === 0) return null;
+  const latest = financials[financials.length - 1];
+  return (parseFloat(latest.income) || 0) - (parseFloat(latest.expenses) || 0);
+}
+
+function getLatestOccupancy(occupancy) {
+  if (!occupancy || occupancy.length === 0) return null;
+  return occupancy[occupancy.length - 1];
+}
+
+function formatMoney(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return '$' + num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function formatPct(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  const num = parseFloat(n);
+  if (isNaN(num)) return '—';
+  return num.toFixed(1) + '%';
+}
+
+// Renders
+function render() {
+  if (state.loading) {
+    document.getElementById('main-content').innerHTML = '<div class="loading">Loading dashboard...</div>';
+    return;
+  }
+
+  // Populate AM dropdown
+  populateAMFilter();
+
+  // Update header subtitle to reflect filter
+  const filtered = getFilteredProperties();
+  const totalUnits = filtered.reduce((sum, [_, p]) => sum + (parseInt(p.info.units) || 0), 0);
+  const propCount = filtered.length;
+  const filterLabel = state.amFilter === 'all' ? 'All AMs' : state.amFilter + "'s portfolio";
+  document.getElementById('header-subtitle').textContent = `${filterLabel} · ${propCount} properties · ${totalUnits.toLocaleString()} units`;
+
+  // Update active tab
+  document.querySelectorAll('#main-tabs .tab').forEach((t, i) => {
+    const views = ['portfolio', 'investment', 'actions', 'walks', 'financials'];
+    t.classList.toggle('active', views[i] === state.view && !state.selectedProperty);
+  });
+
+  if (state.selectedProperty) {
+    renderPropertyDetail();
+  } else if (state.view === 'portfolio') {
+    renderPortfolio();
+  } else if (state.view === 'investment') {
+    renderInvestment();
+  } else if (state.view === 'actions') {
+    renderActions();
+  } else if (state.view === 'walks') {
+    renderWalks();
+  } else if (state.view === 'financials') {
+    renderFinancials();
+  }
+}
+
+function renderPortfolio() {
+  const props = getFilteredProperties();
+  const totalUnits = props.reduce((s, [_, p]) => s + (parseInt(p.info.units) || 0), 0);
+
+  // Aggregate metrics
+  let totalNOI = 0;
+  let avgOcc = 0;
+  let occCount = 0;
+  let openActions = 0;
+  let overdueActions = 0;
+  const today = new Date().toISOString().split('T')[0];
+
+  props.forEach(([_, p]) => {
+    const noi = calcNOI(p.financials);
+    if (noi !== null) totalNOI += noi;
+    const occ = getLatestOccupancy(p.occupancy);
+    if (occ && occ.occupancy) { avgOcc += parseFloat(occ.occupancy); occCount++; }
+    p.actions.forEach(a => {
+      if (a.status !== 'done') {
+        openActions++;
+        if (a.dueDate && a.dueDate < today) overdueActions++;
+      }
+    });
+  });
+  avgOcc = occCount > 0 ? avgOcc / occCount : 0;
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Units</div>
+        <div class="stat-value">${totalUnits.toLocaleString()}</div>
+        <div class="stat-sub">${props.length} properties</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Latest Combined NOI</div>
+        <div class="stat-value">${formatMoney(totalNOI)}</div>
+        <div class="stat-sub">Sum of latest month per property</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Occupancy</div>
+        <div class="stat-value">${formatPct(avgOcc)}</div>
+        <div class="stat-sub">${occCount} properties reporting</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open Action Items</div>
+        <div class="stat-value">${openActions}</div>
+        <div class="stat-sub ${overdueActions > 0 ? 'negative' : ''}">${overdueActions} overdue</div>
+      </div>
+    </div>
+
+    <div class="panel-header" style="padding: 0 4px;">
+      <h3>Properties</h3>
+      <div style="font-size: 12px; color: #64748b;">Click a property to manage details</div>
+    </div>
+
+    <div class="properties-grid">
+  `;
+
+  props.forEach(([id, p]) => {
+    const noi = calcNOI(p.financials);
+    const occ = getLatestOccupancy(p.occupancy);
+    const openA = p.actions.filter(a => a.status !== 'done').length;
+    const eq = parseFloat(p.info.totalEquity) || 0;
+    const dist = parseFloat(p.info.ltdDistributions) || 0;
+    const dpi = eq > 0 ? (dist / eq).toFixed(2) + 'x' : '—';
+    const dpiClass = parseFloat(dpi) >= 1 ? 'positive' : '';
+    html += `
+      <div class="property-card" onclick="selectProperty('${id}')">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+          <span class="property-group ${p.info.groupKey}">${p.info.group}</span>
+          ${p.info.assignedTo ? `<span style="font-size: 11px; color: #94a3b8; background: #334155; padding: 2px 8px; border-radius: 4px;">${p.info.assignedTo}</span>` : ''}
+        </div>
+        <div class="property-name">${p.info.name}</div>
+        <div class="property-location">${p.info.city ? p.info.city + ', ' : ''}${p.info.state} ${p.info.units ? '· ' + p.info.units + ' units' : ''}${p.info.acquisitionDate ? ' · Acq ' + p.info.acquisitionDate.substring(0, 7) : ''}</div>
+        <div class="property-metrics">
+          <div>
+            <div class="metric">Latest NOI</div>
+            <div class="metric-value">${formatMoney(noi)}</div>
+          </div>
+          <div>
+            <div class="metric">Occupancy</div>
+            <div class="metric-value">${occ ? formatPct(occ.occupancy) : '—'}</div>
+          </div>
+          <div>
+            <div class="metric">MOIC</div>
+            <div class="metric-value ${dpiClass}">${dpi}</div>
+          </div>
+          <div>
+            <div class="metric">Open Items</div>
+            <div class="metric-value">${openA}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderPropertyDetail() {
+  const p = state.properties[state.selectedProperty];
+  if (!p) return;
+
+  let html = `
+    <button class="back-btn" onclick="backToPortfolio()">← Back to Portfolio</button>
+    <div class="property-header">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div>
+          <span class="property-group ${p.info.groupKey}">${p.info.group}</span>
+          <h2>${p.info.name}</h2>
+          <div style="color: #94a3b8; font-size: 14px;">${p.info.city ? p.info.city + ', ' : ''}${p.info.state} ${p.info.units ? '· ' + p.info.units + ' units' : ''} ${p.info.yearBuilt ? '· Built ' + p.info.yearBuilt : ''}</div>
+        </div>
+        ${p.info.assignedTo ? `<div style="text-align: right;"><div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Asset Manager</div><div style="font-size: 16px; color: #f8fafc; font-weight: 600;">${p.info.assignedTo}</div></div>` : ''}
+      </div>
+    </div>
+
+    <div class="sub-tabs">
+      <div class="sub-tab ${state.subTab === 'overview' ? 'active' : ''}" onclick="switchSubTab('overview')">Property Info</div>
+      <div class="sub-tab ${state.subTab === 'financials' ? 'active' : ''}" onclick="switchSubTab('financials')">Financials</div>
+      <div class="sub-tab ${state.subTab === 'occupancy' ? 'active' : ''}" onclick="switchSubTab('occupancy')">Occupancy & Leasing</div>
+      <div class="sub-tab ${state.subTab === 'walks' ? 'active' : ''}" onclick="switchSubTab('walks')">Property Walks</div>
+      <div class="sub-tab ${state.subTab === 'actions' ? 'active' : ''}" onclick="switchSubTab('actions')">Action Items</div>
+    </div>
+  `;
+
+  if (state.subTab === 'overview') html += renderOverview(p);
+  else if (state.subTab === 'financials') html += renderPropertyFinancials(p);
+  else if (state.subTab === 'occupancy') html += renderPropertyOccupancy(p);
+  else if (state.subTab === 'walks') html += renderPropertyWalks(p);
+  else if (state.subTab === 'actions') html += renderPropertyActions(p);
+
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderOverview(p) {
+  const acq = p.info.acquisitionDate ? new Date(p.info.acquisitionDate) : null;
+  const today = new Date();
+  const holdYears = acq ? ((today - acq) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1) : '—';
+  const pp = parseFloat(p.info.purchasePrice) || 0;
+  const eq = parseFloat(p.info.totalEquity) || 0;
+  const dist = parseFloat(p.info.ltdDistributions) || 0;
+  const dpi = eq > 0 ? (dist / eq).toFixed(2) + 'x' : '—';
+  const equityPerUnit = (eq && p.info.units) ? eq / parseInt(p.info.units) : 0;
+  const ppPerUnit = (pp && p.info.units) ? pp / parseInt(p.info.units) : 0;
+
+  return `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Hold Period</div>
+        <div class="stat-value">${holdYears}<span style="font-size: 16px; color: #94a3b8;"> yrs</span></div>
+        <div class="stat-sub">Acquired ${p.info.acquisitionDate || '—'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Purchase Price</div>
+        <div class="stat-value" style="font-size: 22px;">${formatMoney(pp)}</div>
+        <div class="stat-sub">${ppPerUnit ? formatMoney(ppPerUnit) + '/unit' : ''}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Equity</div>
+        <div class="stat-value" style="font-size: 22px;">${formatMoney(eq)}</div>
+        <div class="stat-sub">${p.info.investors || 0} investors</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">LTD Distributions</div>
+        <div class="stat-value" style="font-size: 22px;">${formatMoney(dist)}</div>
+        <div class="stat-sub ${parseFloat(dpi) >= 1 ? 'positive' : ''}">${dpi} MOIC</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h3>Property Information</h3></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Assigned To (Asset Manager)</label>
+          <input class="form-input" value="${p.info.assignedTo || ''}" oninput="updateInfo('assignedTo', this.value)" placeholder="e.g., You, Tiffany, Kim" list="am-list">
+          <datalist id="am-list">
+            ${getAllAMs().map(am => `<option value="${am}">`).join('')}
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" value="${p.info.city || ''}" oninput="updateInfo('city', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">State</label>
+          <input class="form-input" value="${p.info.state || ''}" oninput="updateInfo('state', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit Count</label>
+          <input class="form-input" type="number" value="${p.info.units || ''}" oninput="updateInfo('units', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year Built</label>
+          <input class="form-input" type="number" value="${p.info.yearBuilt || ''}" oninput="updateInfo('yearBuilt', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Property Type</label>
+          <input class="form-input" value="${p.info.propertyType || ''}" oninput="updateInfo('propertyType', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Market / Group (badge)</label>
+          <select class="form-select" onchange="updateGroup(this.value)">
+            <option value="Houston" ${p.info.group === 'Houston' ? 'selected' : ''}>Houston</option>
+            <option value="Alvin" ${p.info.group === 'Alvin' ? 'selected' : ''}>Alvin</option>
+            <option value="Rosenberg" ${p.info.group === 'Rosenberg' ? 'selected' : ''}>Rosenberg</option>
+            <option value="Humble" ${p.info.group === 'Humble' ? 'selected' : ''}>Humble</option>
+            <option value="Baytown" ${p.info.group === 'Baytown' ? 'selected' : ''}>Baytown</option>
+            <option value="South Texas" ${p.info.group === 'South Texas' ? 'selected' : ''}>South Texas</option>
+            <option value="Other" ${p.info.group === 'Other' ? 'selected' : ''}>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h3>Investment Details</h3></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Acquisition Date</label>
+          <input class="form-input" type="date" value="${p.info.acquisitionDate || ''}" oninput="updateInfo('acquisitionDate', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purchase Price ($)</label>
+          <input class="form-input" type="number" value="${p.info.purchasePrice || ''}" oninput="updateInfo('purchasePrice', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Equity ($)</label>
+          <input class="form-input" type="number" value="${p.info.totalEquity || ''}" oninput="updateInfo('totalEquity', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label"># of Investors</label>
+          <input class="form-input" type="number" value="${p.info.investors || ''}" oninput="updateInfo('investors', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">LTD Distributions ($)</label>
+          <input class="form-input" type="number" value="${p.info.ltdDistributions || ''}" oninput="updateInfo('ltdDistributions', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Original Loan ($)</label>
+          <input class="form-input" type="number" value="${p.info.origLoan || ''}" oninput="updateInfo('origLoan', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current Loan ($)</label>
+          <input class="form-input" type="number" value="${p.info.currentLoan || ''}" oninput="updateInfo('currentLoan', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">LTD Principal Paid ($)</label>
+          <input class="form-input" type="number" value="${p.info.ltdPrincipalPaid || ''}" oninput="updateInfo('ltdPrincipalPaid', this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">YTD Principal Paid ($)</label>
+          <input class="form-input" type="number" value="${p.info.ytdPrincipalPaid || ''}" oninput="updateInfo('ytdPrincipalPaid', this.value)">
+        </div>
+      </div>
+      ${p.info.equityClasses ? `<div class="alert alert-info" style="margin-top: 12px;"><strong>Equity Classes:</strong> ${p.info.equityClasses}</div>` : ''}
+      <div class="form-group" style="margin-top: 12px;">
+        <label class="form-label">Equity Class Breakdown (optional)</label>
+        <input class="form-input" value="${p.info.equityClasses || ''}" oninput="updateInfo('equityClasses', this.value)" placeholder="e.g., Class A: $X (N investors) | Class P: $Y (M investors)">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h3>Notes / Strategy</h3></div>
+      <div class="form-group">
+        <textarea class="form-textarea" oninput="updateInfo('notes', this.value)" placeholder="Business plan notes, market positioning, value-add opportunities, manager info...">${p.info.notes || ''}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+function renderPropertyFinancials(p) {
+  let html = `
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Monthly Financials</h3>
+        <button class="btn btn-sm" onclick="addFinancial()">+ Add Month</button>
+      </div>
+  `;
+  if (p.financials.length === 0) {
+    html += '<div class="empty-state">No financial data yet. Click "Add Month" to start tracking income, expenses, and NOI.</div>';
+  } else {
+    html += `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Income</th>
+              <th>Expenses</th>
+              <th>NOI</th>
+              <th>Budget NOI</th>
+              <th>Variance</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    p.financials.slice().reverse().forEach((f, idx) => {
+      const realIdx = p.financials.length - 1 - idx;
+      const noi = (parseFloat(f.income) || 0) - (parseFloat(f.expenses) || 0);
+      const variance = noi - (parseFloat(f.budgetNOI) || 0);
+      const varClass = variance >= 0 ? 'positive' : 'negative';
+      html += `
+        <tr>
+          <td><input type="month" value="${f.period}" oninput="updateFinancial(${realIdx}, 'period', this.value)"></td>
+          <td><input type="number" value="${f.income}" oninput="updateFinancial(${realIdx}, 'income', this.value)" placeholder="0"></td>
+          <td><input type="number" value="${f.expenses}" oninput="updateFinancial(${realIdx}, 'expenses', this.value)" placeholder="0"></td>
+          <td style="font-weight: 600;">${formatMoney(noi)}</td>
+          <td><input type="number" value="${f.budgetNOI}" oninput="updateFinancial(${realIdx}, 'budgetNOI', this.value)" placeholder="0"></td>
+          <td class="stat-sub ${varClass}">${variance >= 0 ? '+' : ''}${formatMoney(variance)}</td>
+          <td><input type="text" value="${f.notes || ''}" oninput="updateFinancial(${realIdx}, 'notes', this.value)" placeholder="Variance notes..."></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteFinancial(${realIdx})">×</button></td>
+        </tr>
+      `;
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderPropertyOccupancy(p) {
+  let html = `
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Occupancy & Leasing</h3>
+        <button class="btn btn-sm" onclick="addOccupancy()">+ Add Entry</button>
+      </div>
+  `;
+  if (p.occupancy.length === 0) {
+    html += '<div class="empty-state">No occupancy data yet. Track weekly or monthly occupancy, leasing trends, and concessions.</div>';
+  } else {
+    html += `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Occupancy %</th>
+              <th>Avg Rent</th>
+              <th>Concessions</th>
+              <th>New Leases</th>
+              <th>Notice/Move-Outs</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    p.occupancy.slice().reverse().forEach((o, idx) => {
+      const realIdx = p.occupancy.length - 1 - idx;
+      html += `
+        <tr>
+          <td><input type="date" value="${o.date}" oninput="updateOccupancy(${realIdx}, 'date', this.value)"></td>
+          <td><input type="number" step="0.1" value="${o.occupancy}" oninput="updateOccupancy(${realIdx}, 'occupancy', this.value)" placeholder="95.0"></td>
+          <td><input type="number" value="${o.avgRent}" oninput="updateOccupancy(${realIdx}, 'avgRent', this.value)" placeholder="0"></td>
+          <td><input type="text" value="${o.concessions || ''}" oninput="updateOccupancy(${realIdx}, 'concessions', this.value)" placeholder="$500 off..."></td>
+          <td><input type="number" value="${o.newLeases}" oninput="updateOccupancy(${realIdx}, 'newLeases', this.value)" placeholder="0"></td>
+          <td><input type="number" value="${o.moveOuts}" oninput="updateOccupancy(${realIdx}, 'moveOuts', this.value)" placeholder="0"></td>
+          <td><input type="text" value="${o.notes || ''}" oninput="updateOccupancy(${realIdx}, 'notes', this.value)" placeholder="Market notes..."></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteOccupancy(${realIdx})">×</button></td>
+        </tr>
+      `;
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderPropertyWalks(p) {
+  let html = `
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Property Walk Reports</h3>
+        <button class="btn btn-sm" onclick="addWalk()">+ New Walk Report</button>
+      </div>
+  `;
+
+  // Quarterly check
+  const today = new Date();
+  const quarterAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()).toISOString().split('T')[0];
+  const recentWalk = p.walks.find(w => w.date >= quarterAgo);
+  if (!recentWalk && p.walks.length > 0) {
+    html += `<div class="alert alert-warn">⚠️ Last walk was on ${p.walks[p.walks.length - 1].date} — quarterly walk is due.</div>`;
+  } else if (p.walks.length === 0) {
+    html += `<div class="alert alert-info">No walks recorded yet. Quarterly walks are required minimum.</div>`;
+  }
+
+  if (p.walks.length === 0) {
+    html += '<div class="empty-state">Start by adding your first quarterly walk report.</div>';
+  } else {
+    p.walks.slice().reverse().forEach((w, idx) => {
+      const realIdx = p.walks.length - 1 - idx;
+      html += `
+        <div style="border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #0f172a;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <div style="font-weight: 600; color: #f8fafc;">Walk Report — <input type="date" value="${w.date}" oninput="updateWalk(${realIdx}, 'date', this.value)" style="width: auto;"></div>
+            <button class="btn btn-sm btn-danger" onclick="deleteWalk(${realIdx})">Delete</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Curb Appeal</label>
+              <select class="form-select" onchange="updateWalk(${realIdx}, 'curbAppeal', this.value)">
+                <option value="">—</option>
+                <option ${w.curbAppeal === 'Excellent' ? 'selected' : ''}>Excellent</option>
+                <option ${w.curbAppeal === 'Good' ? 'selected' : ''}>Good</option>
+                <option ${w.curbAppeal === 'Fair' ? 'selected' : ''}>Fair</option>
+                <option ${w.curbAppeal === 'Poor' ? 'selected' : ''}>Poor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Common Areas</label>
+              <select class="form-select" onchange="updateWalk(${realIdx}, 'commonAreas', this.value)">
+                <option value="">—</option>
+                <option ${w.commonAreas === 'Excellent' ? 'selected' : ''}>Excellent</option>
+                <option ${w.commonAreas === 'Good' ? 'selected' : ''}>Good</option>
+                <option ${w.commonAreas === 'Fair' ? 'selected' : ''}>Fair</option>
+                <option ${w.commonAreas === 'Poor' ? 'selected' : ''}>Poor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amenities</label>
+              <select class="form-select" onchange="updateWalk(${realIdx}, 'amenities', this.value)">
+                <option value="">—</option>
+                <option ${w.amenities === 'Excellent' ? 'selected' : ''}>Excellent</option>
+                <option ${w.amenities === 'Good' ? 'selected' : ''}>Good</option>
+                <option ${w.amenities === 'Fair' ? 'selected' : ''}>Fair</option>
+                <option ${w.amenities === 'Poor' ? 'selected' : ''}>Poor</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model Units</label>
+              <select class="form-select" onchange="updateWalk(${realIdx}, 'modelUnits', this.value)">
+                <option value="">—</option>
+                <option ${w.modelUnits === 'Excellent' ? 'selected' : ''}>Excellent</option>
+                <option ${w.modelUnits === 'Good' ? 'selected' : ''}>Good</option>
+                <option ${w.modelUnits === 'Fair' ? 'selected' : ''}>Fair</option>
+                <option ${w.modelUnits === 'Poor' ? 'selected' : ''}>Poor</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label">Findings & Observations</label>
+            <textarea class="form-textarea" oninput="updateWalk(${realIdx}, 'findings', this.value)" placeholder="Deferred maintenance, operational gaps...">${w.findings || ''}</textarea>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label">Value-Add Opportunities</label>
+            <textarea class="form-textarea" oninput="updateWalk(${realIdx}, 'valueAdd', this.value)" placeholder="Renovations, amenity upgrades, repositioning...">${w.valueAdd || ''}</textarea>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label">Action Items from Walk</label>
+            <textarea class="form-textarea" oninput="updateWalk(${realIdx}, 'actionItems', this.value)" placeholder="Items to follow up on (also add to Action Items tab)...">${w.actionItems || ''}</textarea>
+          </div>
+        </div>
+      `;
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderPropertyActions(p) {
+  let html = `
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Action Items</h3>
+        <button class="btn btn-sm" onclick="addAction()">+ New Action Item</button>
+      </div>
+  `;
+  if (p.actions.length === 0) {
+    html += '<div class="empty-state">No action items. Track follow-ups, escalations, and outstanding items here.</div>';
+  } else {
+    html += `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Owner</th>
+              <th>Due Date</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    const today = new Date().toISOString().split('T')[0];
+    p.actions.slice().reverse().forEach((a, idx) => {
+      const realIdx = p.actions.length - 1 - idx;
+      const overdue = a.status !== 'done' && a.dueDate && a.dueDate < today;
+      html += `
+        <tr>
+          <td><input type="text" value="${a.title || ''}" oninput="updateAction(${realIdx}, 'title', this.value)" placeholder="Action item..."></td>
+          <td>
+            <select onchange="updateAction(${realIdx}, 'category', this.value)">
+              <option value="">—</option>
+              <option ${a.category === 'Financial' ? 'selected' : ''}>Financial</option>
+              <option ${a.category === 'Maintenance' ? 'selected' : ''}>Maintenance</option>
+              <option ${a.category === 'Leasing' ? 'selected' : ''}>Leasing</option>
+              <option ${a.category === 'Operations' ? 'selected' : ''}>Operations</option>
+              <option ${a.category === 'Capital' ? 'selected' : ''}>Capital</option>
+              <option ${a.category === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+          </td>
+          <td>
+            <select onchange="updateAction(${realIdx}, 'priority', this.value)">
+              <option value="">—</option>
+              <option ${a.priority === 'High' ? 'selected' : ''}>High</option>
+              <option ${a.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+              <option ${a.priority === 'Low' ? 'selected' : ''}>Low</option>
+            </select>
+          </td>
+          <td>
+            <select onchange="updateAction(${realIdx}, 'status', this.value)">
+              <option value="open" ${a.status === 'open' ? 'selected' : ''}>Open</option>
+              <option value="progress" ${a.status === 'progress' ? 'selected' : ''}>In Progress</option>
+              <option value="done" ${a.status === 'done' ? 'selected' : ''}>Done</option>
+            </select>
+          </td>
+          <td><input type="text" value="${a.owner || ''}" oninput="updateAction(${realIdx}, 'owner', this.value)" placeholder="Owner"></td>
+          <td><input type="date" value="${a.dueDate || ''}" oninput="updateAction(${realIdx}, 'dueDate', this.value)" style="${overdue ? 'border-color: #dc2626;' : ''}"></td>
+          <td><input type="text" value="${a.notes || ''}" oninput="updateAction(${realIdx}, 'notes', this.value)" placeholder="Notes..."></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteAction(${realIdx})">×</button></td>
+        </tr>
+      `;
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// Cross-property views
+// Investment Performance view
+function renderInvestment() {
+  const today = new Date();
+  let totalPP = 0, totalEq = 0, totalDist = 0, totalNOI = 0, totalLoan = 0, totalCurrLoan = 0, totalPrincPaid = 0, totalInvestors = 0;
+  const props = getFilteredProperties();
+
+  props.forEach(([_, p]) => {
+    totalPP += parseFloat(p.info.purchasePrice) || 0;
+    totalEq += parseFloat(p.info.totalEquity) || 0;
+    totalDist += parseFloat(p.info.ltdDistributions) || 0;
+    totalLoan += parseFloat(p.info.origLoan) || 0;
+    totalCurrLoan += parseFloat(p.info.currentLoan) || 0;
+    totalPrincPaid += parseFloat(p.info.ltdPrincipalPaid) || 0;
+    totalInvestors += parseInt(p.info.investors) || 0;
+    const noi = calcNOI(p.financials);
+    if (noi !== null) totalNOI += noi;
+  });
+
+  const portfolioDPI = totalEq > 0 ? (totalDist / totalEq).toFixed(2) + 'x' : '—';
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Acquisition Cost</div>
+        <div class="stat-value" style="font-size: 24px;">${formatMoney(totalPP)}</div>
+        <div class="stat-sub">${props.length} properties</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Equity Raised</div>
+        <div class="stat-value" style="font-size: 24px;">${formatMoney(totalEq)}</div>
+        <div class="stat-sub">${totalInvestors} investors</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">LTD Distributions</div>
+        <div class="stat-value" style="font-size: 24px;">${formatMoney(totalDist)}</div>
+        <div class="stat-sub ${parseFloat(portfolioDPI) >= 1 ? 'positive' : ''}">${portfolioDPI} portfolio MOIC</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Outstanding Debt</div>
+        <div class="stat-value" style="font-size: 24px;">${formatMoney(totalCurrLoan)}</div>
+        <div class="stat-sub">${formatMoney(totalPrincPaid)} principal paid</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><h3>Investment Performance by Property</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Acq Date</th>
+              <th>Hold</th>
+              <th>Units</th>
+              <th>Purchase Price</th>
+              <th>$/Unit</th>
+              <th>Equity</th>
+              <th>LTD Dist</th>
+              <th>MOIC</th>
+              <th>Curr Loan</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+  // Sort by DPI descending
+  const sorted = props.slice().sort(([_, a], [__, b]) => {
+    const dpiA = (parseFloat(a.info.totalEquity) || 0) > 0 ? (parseFloat(a.info.ltdDistributions) || 0) / parseFloat(a.info.totalEquity) : 0;
+    const dpiB = (parseFloat(b.info.totalEquity) || 0) > 0 ? (parseFloat(b.info.ltdDistributions) || 0) / parseFloat(b.info.totalEquity) : 0;
+    return dpiB - dpiA;
+  });
+
+  sorted.forEach(([id, p]) => {
+    const acq = p.info.acquisitionDate ? new Date(p.info.acquisitionDate) : null;
+    const holdYears = acq ? ((today - acq) / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1) + 'y' : '—';
+    const pp = parseFloat(p.info.purchasePrice) || 0;
+    const eq = parseFloat(p.info.totalEquity) || 0;
+    const dist = parseFloat(p.info.ltdDistributions) || 0;
+    const units = parseInt(p.info.units) || 0;
+    const ppPerUnit = units > 0 ? pp / units : 0;
+    const dpi = eq > 0 ? dist / eq : 0;
+    const currLoan = parseFloat(p.info.currentLoan) || 0;
+    const dpiClass = dpi >= 1 ? 'positive' : (dpi >= 0.5 ? '' : 'negative');
+
+    html += `
+      <tr style="cursor: pointer;" onclick="selectProperty('${id}')">
+        <td><strong>${p.info.name}</strong><br><span style="color: #64748b; font-size: 11px;">${p.info.group}</span></td>
+        <td>${p.info.acquisitionDate || '—'}</td>
+        <td>${holdYears}</td>
+        <td>${units || '—'}</td>
+        <td>${formatMoney(pp)}</td>
+        <td>${formatMoney(ppPerUnit)}</td>
+        <td>${formatMoney(eq)}</td>
+        <td>${formatMoney(dist)}</td>
+        <td class="stat-sub ${dpiClass}"><strong>${eq > 0 ? dpi.toFixed(2) + 'x' : '—'}</strong></td>
+        <td>${formatMoney(currLoan)}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        <tr style="background: #0f172a; font-weight: 700;">
+          <td colspan="4">PORTFOLIO TOTAL</td>
+          <td>${formatMoney(totalPP)}</td>
+          <td>—</td>
+          <td>${formatMoney(totalEq)}</td>
+          <td>${formatMoney(totalDist)}</td>
+          <td class="stat-sub ${parseFloat(portfolioDPI) >= 1 ? 'positive' : ''}">${portfolioDPI}</td>
+          <td>${formatMoney(totalCurrLoan)}</td>
+        </tr>
+        </tbody></table></div>
+    </div>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderActions() {
+  const allActions = [];
+  getFilteredProperties().forEach(([id, p]) => {
+    p.actions.forEach((a, idx) => {
+      allActions.push({ ...a, propertyId: id, propertyName: p.info.name, group: p.info.group, actionIdx: idx });
+    });
+  });
+
+  const today = new Date().toISOString().split('T')[0];
+  const open = allActions.filter(a => a.status !== 'done');
+  const overdue = open.filter(a => a.dueDate && a.dueDate < today);
+  const high = open.filter(a => a.priority === 'High');
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Open</div>
+        <div class="stat-value">${open.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Overdue</div>
+        <div class="stat-value" style="color: ${overdue.length > 0 ? '#f87171' : '#f8fafc'}">${overdue.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">High Priority</div>
+        <div class="stat-value">${high.length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">${allActions.filter(a => a.status === 'done').length}</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>All Action Items Across Portfolio</h3>
+        <div class="filter-bar">
+          <select id="filter-status" onchange="render()">
+            <option value="all">All Statuses</option>
+            <option value="open" selected>Open Only</option>
+            <option value="overdue">Overdue Only</option>
+            <option value="done">Completed</option>
+          </select>
+          <select id="filter-priority" onchange="render()">
+            <option value="all">All Priorities</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+  `;
+
+  // Apply filters
+  const statusEl = document.getElementById('filter-status');
+  const priorityEl = document.getElementById('filter-priority');
+  const statusFilter = statusEl ? statusEl.value : 'open';
+  const priorityFilter = priorityEl ? priorityEl.value : 'all';
+
+  let filtered = allActions;
+  if (statusFilter === 'open') filtered = filtered.filter(a => a.status !== 'done');
+  else if (statusFilter === 'overdue') filtered = filtered.filter(a => a.status !== 'done' && a.dueDate && a.dueDate < today);
+  else if (statusFilter === 'done') filtered = filtered.filter(a => a.status === 'done');
+  if (priorityFilter !== 'all') filtered = filtered.filter(a => a.priority === priorityFilter);
+
+  // Sort: overdue first, then by due date
+  filtered.sort((a, b) => {
+    const aOver = a.status !== 'done' && a.dueDate && a.dueDate < today;
+    const bOver = b.status !== 'done' && b.dueDate && b.dueDate < today;
+    if (aOver !== bOver) return aOver ? -1 : 1;
+    return (a.dueDate || '9999') > (b.dueDate || '9999') ? 1 : -1;
+  });
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state">No action items match these filters.</div>';
+  } else {
+    html += `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    filtered.forEach(a => {
+      const overdue = a.status !== 'done' && a.dueDate && a.dueDate < today;
+      const statusBadge = a.status === 'done' ? 'badge-done' : a.status === 'progress' ? 'badge-progress' : (overdue ? 'badge-overdue' : 'badge-open');
+      const statusText = a.status === 'done' ? 'Done' : a.status === 'progress' ? 'In Progress' : (overdue ? 'Overdue' : 'Open');
+      const priBadge = a.priority === 'High' ? 'badge-high' : a.priority === 'Medium' ? 'badge-med' : 'badge-low';
+      html += `
+        <tr style="cursor: pointer;" onclick="selectProperty('${a.propertyId}'); state.subTab='actions';">
+          <td><strong>${a.propertyName}</strong><br><span style="color: #64748b; font-size: 11px;">${a.group}</span></td>
+          <td>${a.title || '—'}</td>
+          <td>${a.category || '—'}</td>
+          <td>${a.priority ? `<span class="badge ${priBadge}">${a.priority}</span>` : '—'}</td>
+          <td><span class="badge ${statusBadge}">${statusText}</span></td>
+          <td>${a.dueDate || '—'}</td>
+          <td>${a.owner || '—'}</td>
+        </tr>
+      `;
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '</div>';
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderWalks() {
+  const today = new Date();
+  const quarterAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()).toISOString().split('T')[0];
+
+  let html = '<div class="panel"><div class="panel-header"><h3>Property Walk Status</h3></div>';
+  html += '<div class="alert alert-info">Quarterly walks are required minimum. Properties without a walk in the last 90 days are flagged.</div>';
+  html += '<div class="table-wrap"><table><thead><tr><th>Property</th><th>Group</th><th>Last Walk</th><th>Status</th><th>Total Walks</th><th></th></tr></thead><tbody>';
+
+  getFilteredProperties().forEach(([id, p]) => {
+    const lastWalk = p.walks.length > 0 ? p.walks[p.walks.length - 1].date : null;
+    const isOverdue = !lastWalk || lastWalk < quarterAgo;
+    const statusBadge = !lastWalk ? 'badge-overdue' : (isOverdue ? 'badge-overdue' : 'badge-done');
+    const statusText = !lastWalk ? 'No Walks' : (isOverdue ? 'Quarterly Due' : 'Current');
+    html += `
+      <tr>
+        <td><strong>${p.info.name}</strong></td>
+        <td>${p.info.group}</td>
+        <td>${lastWalk || '—'}</td>
+        <td><span class="badge ${statusBadge}">${statusText}</span></td>
+        <td>${p.walks.length}</td>
+        <td><button class="btn btn-sm" onclick="selectProperty('${id}'); state.subTab='walks';">View</button></td>
+      </tr>
+    `;
+  });
+  html += '</tbody></table></div></div>';
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderFinancials() {
+  // Build property name -> id lookup for the paste table (filtered by AM)
+  const propRows = getFilteredProperties().map(([id, p]) => ({ id, name: p.info.name, group: p.info.group }));
+
+  let html = `
+    <div class="panel" style="background: #1e293b; border: 1px solid #3b82f6;">
+      <div class="panel-header">
+        <h3>📋 Monthly Update — Bulk Entry</h3>
+        <button class="btn btn-sm btn-secondary" onclick="toggleBulkPaste()">Show/Hide</button>
+      </div>
+      <div id="bulk-paste-section" style="display: none;">
+        <div class="alert alert-info" style="margin-bottom: 12px;">
+          Enter new monthly numbers for all 9 properties at once. Pick the period, then either type/paste values into the table OR paste tab-separated data into the "Paste from spreadsheet" box.
+        </div>
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: end;">
+          <div class="form-group">
+            <label class="form-label">Period</label>
+            <input type="month" id="bulk-period" class="form-input" value="${getDefaultBulkPeriod()}" style="width: 180px;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">If period exists</label>
+            <select id="bulk-mode" class="form-select" style="width: 200px;">
+              <option value="replace">Replace existing</option>
+              <option value="skip">Skip (keep existing)</option>
+            </select>
+          </div>
+          <button class="btn" onclick="applyBulkUpdate()">Apply Update</button>
+          <button class="btn btn-secondary" onclick="clearBulkPaste()">Clear Form</button>
+        </div>
+
+        <details style="margin-bottom: 16px;">
+          <summary style="cursor: pointer; padding: 8px; background: #0f172a; border-radius: 6px; color: #94a3b8;">📥 Paste from spreadsheet (optional)</summary>
+          <div style="padding: 12px 0;">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Paste tab-separated values with columns: <strong>Property Name | Income | Expenses</strong> (NOI is calculated). One row per property. Property names must match exactly.</div>
+            <textarea id="bulk-paste-text" class="form-textarea" placeholder="Lakeview&#9;485000&#9;145000&#10;City Crossing&#9;395000&#9;220000&#10;..." style="min-height: 120px; font-family: monospace; font-size: 12px;"></textarea>
+            <button class="btn btn-sm" style="margin-top: 8px;" onclick="parsePasteData()">Parse into Table Below</button>
+          </div>
+        </details>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Group</th>
+                <th>Income ($)</th>
+                <th>Expenses ($)</th>
+                <th>NOI</th>
+                <th>Budget NOI ($) <span style="font-weight: normal; color: #64748b;">optional</span></th>
+                <th>Notes <span style="font-weight: normal; color: #64748b;">optional</span></th>
+              </tr>
+            </thead>
+            <tbody>
+  `;
+
+  propRows.forEach(p => {
+    html += `
+      <tr id="bulk-row-${p.id}">
+        <td><strong>${p.name}</strong></td>
+        <td style="color: #94a3b8; font-size: 12px;">${p.group}</td>
+        <td><input type="number" id="bulk-inc-${p.id}" placeholder="0" step="0.01"></td>
+        <td><input type="number" id="bulk-exp-${p.id}" placeholder="0" step="0.01"></td>
+        <td id="bulk-noi-${p.id}" style="color: #64748b; font-weight: 600;">—</td>
+        <td><input type="number" id="bulk-bud-${p.id}" placeholder="0" step="0.01"></td>
+        <td><input type="text" id="bulk-note-${p.id}" placeholder="Notes..."></td>
+      </tr>
+    `;
+  });
+
+  html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel"><div class="panel-header"><h3>Latest Financial Snapshot</h3></div>`;
+  html += '<div class="table-wrap"><table><thead><tr><th>Property</th><th>Group</th><th>Latest Period</th><th>Income</th><th>Expenses</th><th>NOI</th><th>Budget NOI</th><th>Variance</th></tr></thead><tbody>';
+
+  let totIncome = 0, totExp = 0, totNOI = 0, totBud = 0;
+
+  getFilteredProperties().forEach(([id, p]) => {
+    const latest = p.financials.length > 0 ? p.financials[p.financials.length - 1] : null;
+    if (latest) {
+      const income = parseFloat(latest.income) || 0;
+      const exp = parseFloat(latest.expenses) || 0;
+      const noi = income - exp;
+      const bud = parseFloat(latest.budgetNOI) || 0;
+      const variance = noi - bud;
+      totIncome += income; totExp += exp; totNOI += noi; totBud += bud;
+      const varClass = variance >= 0 ? 'positive' : 'negative';
+      html += `
+        <tr style="cursor: pointer;" onclick="selectProperty('${id}'); state.subTab='financials';">
+          <td><strong>${p.info.name}</strong></td>
+          <td>${p.info.group}</td>
+          <td>${latest.period || '—'}</td>
+          <td>${formatMoney(income)}</td>
+          <td>${formatMoney(exp)}</td>
+          <td><strong>${formatMoney(noi)}</strong></td>
+          <td>${formatMoney(bud)}</td>
+          <td class="stat-sub ${varClass}">${variance >= 0 ? '+' : ''}${formatMoney(variance)}</td>
+        </tr>
+      `;
+    } else {
+      html += `
+        <tr style="cursor: pointer;" onclick="selectProperty('${id}'); state.subTab='financials';">
+          <td><strong>${p.info.name}</strong></td>
+          <td>${p.info.group}</td>
+          <td colspan="6" style="color: #64748b;">No financial data — click to add</td>
+        </tr>
+      `;
+    }
+  });
+
+  html += `
+    <tr style="background: #0f172a; font-weight: 700;">
+      <td colspan="3">PORTFOLIO TOTAL</td>
+      <td>${formatMoney(totIncome)}</td>
+      <td>${formatMoney(totExp)}</td>
+      <td>${formatMoney(totNOI)}</td>
+      <td>${formatMoney(totBud)}</td>
+      <td class="stat-sub ${(totNOI - totBud) >= 0 ? 'positive' : 'negative'}">${(totNOI - totBud) >= 0 ? '+' : ''}${formatMoney(totNOI - totBud)}</td>
+    </tr>
+  `;
+  html += '</tbody></table></div></div>';
+  document.getElementById('main-content').innerHTML = html;
+}
+
+// Mutators
+function updateInfo(field, value) {
+  state.properties[state.selectedProperty].info[field] = value;
+  saveData();
+  // Don't re-render mid-typing — derived header values will update on next view change
+}
+
+function updateGroup(value) {
+  // Map display name -> groupKey for badge colors
+  const groupKeyMap = {
+    'Houston': 'houston', 'Alvin': 'alvin', 'Rosenberg': 'rosenberg',
+    'Humble': 'humble', 'Baytown': 'baytown', 'South Texas': 'southtexas',
+    'Other': 'other'
+  };
+  const info = state.properties[state.selectedProperty].info;
+  info.group = value;
+  info.groupKey = groupKeyMap[value] || 'other';
+  saveData();
+  render();  // Re-render so the badge color updates immediately
+}
+
+function addFinancial() {
+  const today = new Date();
+  const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  state.properties[state.selectedProperty].financials.push({
+    period, income: '', expenses: '', budgetNOI: '', notes: ''
+  });
+  saveData();
+  render();
+}
+
+function updateFinancial(idx, field, value) {
+  const p = state.properties[state.selectedProperty];
+  p.financials[idx][field] = value;
+  saveData();
+  // Targeted DOM update for derived values (NOI and variance) — no full re-render
+  if (field === 'income' || field === 'expenses' || field === 'budgetNOI') {
+    const f = p.financials[idx];
+    const noi = (parseFloat(f.income) || 0) - (parseFloat(f.expenses) || 0);
+    const variance = noi - (parseFloat(f.budgetNOI) || 0);
+    // Find the row by reverse-iterating to match how the table is rendered (newest first)
+    const reverseIdx = p.financials.length - 1 - idx;
+    const tbody = document.querySelector('.panel table tbody');
+    if (tbody) {
+      const row = tbody.children[reverseIdx];
+      if (row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 6) {
+          cells[3].textContent = formatMoney(noi);
+          cells[5].textContent = (variance >= 0 ? '+' : '') + formatMoney(variance);
+          cells[5].className = 'stat-sub ' + (variance >= 0 ? 'positive' : 'negative');
+        }
+      }
+    }
+  }
+}
+
+function deleteFinancial(idx) {
+  if (!confirm('Delete this financial entry?')) return;
+  state.properties[state.selectedProperty].financials.splice(idx, 1);
+  saveData();
+  render();
+}
+
+function addOccupancy() {
+  const today = new Date().toISOString().split('T')[0];
+  state.properties[state.selectedProperty].occupancy.push({
+    date: today, occupancy: '', avgRent: '', concessions: '', newLeases: '', moveOuts: '', notes: ''
+  });
+  saveData();
+  render();
+}
+
+function updateOccupancy(idx, field, value) {
+  state.properties[state.selectedProperty].occupancy[idx][field] = value;
+  saveData();
+}
+
+function deleteOccupancy(idx) {
+  if (!confirm('Delete this occupancy entry?')) return;
+  state.properties[state.selectedProperty].occupancy.splice(idx, 1);
+  saveData();
+  render();
+}
+
+function addWalk() {
+  const today = new Date().toISOString().split('T')[0];
+  state.properties[state.selectedProperty].walks.push({
+    date: today, curbAppeal: '', commonAreas: '', amenities: '', modelUnits: '',
+    findings: '', valueAdd: '', actionItems: ''
+  });
+  saveData();
+  render();
+}
+
+function updateWalk(idx, field, value) {
+  state.properties[state.selectedProperty].walks[idx][field] = value;
+  saveData();
+}
+
+function deleteWalk(idx) {
+  if (!confirm('Delete this walk report?')) return;
+  state.properties[state.selectedProperty].walks.splice(idx, 1);
+  saveData();
+  render();
+}
+
+function addAction() {
+  state.properties[state.selectedProperty].actions.push({
+    title: '', category: '', priority: 'Medium', status: 'open', owner: '', dueDate: '', notes: ''
+  });
+  saveData();
+  render();
+}
+
+function updateAction(idx, field, value) {
+  state.properties[state.selectedProperty].actions[idx][field] = value;
+  saveData();
+}
+
+function deleteAction(idx) {
+  if (!confirm('Delete this action item?')) return;
+  state.properties[state.selectedProperty].actions.splice(idx, 1);
+  saveData();
+  render();
+}
+
+// Import/Export
+// Bulk monthly update functions
+function getDefaultBulkPeriod() {
+  // Default to the latest period across all properties + 1 month, or current month
+  let latestPeriod = '';
+  Object.values(state.properties).forEach(p => {
+    p.financials.forEach(f => {
+      if (f.period > latestPeriod) latestPeriod = f.period;
+    });
+  });
+  if (!latestPeriod) {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  }
+  // Add one month
+  const [y, m] = latestPeriod.split('-').map(Number);
+  const next = new Date(y, m, 1);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function toggleBulkPaste() {
+  const sec = document.getElementById('bulk-paste-section');
+  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+  if (sec.style.display === 'block') {
+    // Wire up live NOI calculation
+    Object.keys(state.properties).forEach(id => {
+      const inc = document.getElementById(`bulk-inc-${id}`);
+      const exp = document.getElementById(`bulk-exp-${id}`);
+      const update = () => {
+        const i = parseFloat(inc.value) || 0;
+        const e = parseFloat(exp.value) || 0;
+        const noiCell = document.getElementById(`bulk-noi-${id}`);
+        if (inc.value || exp.value) {
+          const noi = i - e;
+          noiCell.textContent = formatMoney(noi);
+          noiCell.style.color = noi >= 0 ? '#4ade80' : '#f87171';
+        } else {
+          noiCell.textContent = '—';
+          noiCell.style.color = '#64748b';
+        }
+      };
+      inc.addEventListener('input', update);
+      exp.addEventListener('input', update);
+    });
+  }
+}
+
+function clearBulkPaste() {
+  Object.keys(state.properties).forEach(id => {
+    document.getElementById(`bulk-inc-${id}`).value = '';
+    document.getElementById(`bulk-exp-${id}`).value = '';
+    document.getElementById(`bulk-bud-${id}`).value = '';
+    document.getElementById(`bulk-note-${id}`).value = '';
+    const noiCell = document.getElementById(`bulk-noi-${id}`);
+    noiCell.textContent = '—';
+    noiCell.style.color = '#64748b';
+  });
+  document.getElementById('bulk-paste-text').value = '';
+}
+
+function parsePasteData() {
+  const text = document.getElementById('bulk-paste-text').value.trim();
+  if (!text) {
+    alert('Paste some data first.');
+    return;
+  }
+  const lines = text.split('\n').filter(l => l.trim());
+  const nameToId = {};
+  Object.entries(state.properties).forEach(([id, p]) => {
+    nameToId[p.info.name.toLowerCase().trim()] = id;
+  });
+
+  let matched = 0, unmatched = [];
+  lines.forEach(line => {
+    // Split by tab or multiple spaces
+    const parts = line.split(/\t|  +/).map(s => s.trim()).filter(s => s);
+    if (parts.length < 2) return;
+    const name = parts[0].toLowerCase();
+    const id = nameToId[name];
+    if (!id) {
+      // Try fuzzy match — find a property whose name starts with the pasted name or vice versa
+      const fuzzy = Object.entries(state.properties).find(([_, p]) => {
+        const pn = p.info.name.toLowerCase();
+        return pn.includes(name) || name.includes(pn);
+      });
+      if (fuzzy) {
+        const [fid] = fuzzy;
+        applyParsedRow(fid, parts);
+        matched++;
+      } else {
+        unmatched.push(parts[0]);
+      }
+    } else {
+      applyParsedRow(id, parts);
+      matched++;
+    }
+  });
+
+  // Trigger NOI updates
+  Object.keys(state.properties).forEach(id => {
+    const inc = document.getElementById(`bulk-inc-${id}`);
+    if (inc) inc.dispatchEvent(new Event('input'));
+  });
+
+  let msg = `Parsed ${matched} row${matched !== 1 ? 's' : ''} into the table.`;
+  if (unmatched.length > 0) msg += `\n\nCould not match: ${unmatched.join(', ')}\n\nProperty names must match exactly. Available names: ${Object.values(state.properties).map(p => p.info.name).join(', ')}`;
+  alert(msg);
+}
+
+function applyParsedRow(id, parts) {
+  const incEl = document.getElementById(`bulk-inc-${id}`);
+  const expEl = document.getElementById(`bulk-exp-${id}`);
+  const budEl = document.getElementById(`bulk-bud-${id}`);
+  if (parts[1]) incEl.value = parts[1].replace(/[$,]/g, '');
+  if (parts[2]) expEl.value = parts[2].replace(/[$,]/g, '');
+  if (parts[3] && !isNaN(parseFloat(parts[3].replace(/[$,]/g, '')))) {
+    budEl.value = parts[3].replace(/[$,]/g, '');
+  }
+}
+
+async function applyBulkUpdate() {
+  const period = document.getElementById('bulk-period').value;
+  if (!period) {
+    alert('Please select a period (month).');
+    return;
+  }
+  const mode = document.getElementById('bulk-mode').value;
+  let updated = 0, added = 0, skipped = 0, blank = 0;
+  const summary = [];
+
+  getFilteredProperties().forEach(([id, p]) => {
+    const incVal = document.getElementById(`bulk-inc-${id}`).value;
+    const expVal = document.getElementById(`bulk-exp-${id}`).value;
+    const budVal = document.getElementById(`bulk-bud-${id}`).value;
+    const noteVal = document.getElementById(`bulk-note-${id}`).value;
+
+    if (!incVal && !expVal) {
+      blank++;
+      return;
+    }
+
+    const existing = p.financials.find(f => f.period === period);
+    if (existing) {
+      if (mode === 'skip') {
+        skipped++;
+        summary.push(`${p.info.name}: skipped (existing entry kept)`);
+        return;
+      }
+      existing.income = incVal || '0';
+      existing.expenses = expVal || '0';
+      if (budVal) existing.budgetNOI = budVal;
+      if (noteVal) existing.notes = noteVal;
+      updated++;
+      summary.push(`${p.info.name}: updated`);
+    } else {
+      p.financials.push({
+        period,
+        income: incVal || '0',
+        expenses: expVal || '0',
+        budgetNOI: budVal || '',
+        notes: noteVal || ''
+      });
+      // Keep financials sorted by period
+      p.financials.sort((a, b) => a.period.localeCompare(b.period));
+      added++;
+      summary.push(`${p.info.name}: added`);
+    }
+  });
+
+  if (updated + added === 0) {
+    alert('No values entered. Type or paste numbers into the table first.');
+    return;
+  }
+
+  await saveData();
+  clearBulkPaste();
+  document.getElementById('bulk-paste-section').style.display = 'none';
+  render();
+
+  let msg = `✓ ${period} updated successfully.\n\n`;
+  if (added > 0) msg += `Added: ${added}\n`;
+  if (updated > 0) msg += `Updated: ${updated}\n`;
+  if (skipped > 0) msg += `Skipped (existing): ${skipped}\n`;
+  if (blank > 0) msg += `Blank (no entry made): ${blank}\n`;
+  alert(msg);
+}
+
+function exportData() {
+  const data = JSON.stringify(state.properties, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rockstar-portfolio-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      // Detect patch mode (partial update) vs full replace
+      if (imported._patch_mode === true) {
+        const desc = imported._patch_description || 'Apply targeted updates to specific properties';
+        const propertyIds = Object.keys(imported).filter(k => !k.startsWith('_'));
+        const propertyNames = propertyIds.map(id => state.properties[id]?.info?.name || id).join(', ');
+        if (!confirm(`PATCH UPDATE\n\n${desc}\n\nProperties affected: ${propertyNames}\n\nThis will only modify the specific fields listed in the patch — all other data is preserved.\n\nApply?`)) return;
+        applyPatch(imported);
+        await saveData();
+        render();
+        alert(`✓ Patch applied successfully.\n\nUpdated ${propertyIds.length} ${propertyIds.length === 1 ? 'property' : 'properties'}.`);
+      } else {
+        // Full replace import
+        if (!confirm('FULL IMPORT\n\nThis will REPLACE all current data with the imported file.\n\nAll your edits will be overwritten. Continue?')) return;
+        state.properties = imported;
+        await saveData();
+        render();
+        alert('Data imported successfully.');
+      }
+    } catch (err) {
+      alert('Failed to import: ' + err.message);
+    }
+    // Clear the input so the same file can be imported again if needed
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// Apply a patch file (partial update) to state.properties
+function applyPatch(patch) {
+  Object.keys(patch).forEach(key => {
+    if (key.startsWith('_')) return;  // Skip metadata keys
+    const propertyData = patch[key];
+    if (!state.properties[key]) {
+      console.warn(`Patch references unknown property: ${key}`);
+      return;
+    }
+    if (propertyData.info_updates) {
+      Object.assign(state.properties[key].info, propertyData.info_updates);
+    }
+    // Future: support adding/updating financials, occupancy, walks, actions
+  });
+}
+
+// Init
+loadData();
+</script>
+
+</body>
+</html>
